@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { SlidersHorizontal, RotateCw } from "lucide-react";
 import { PLAYERS, PAIRS, player, newest, within } from "../lib/domain";
-import type { Match } from "../lib/domain";
-import { useMatches, useAuth } from "../components/providers";
+import type { BreakSession } from "../lib/domain";
+import { useBreaks, useAuth } from "../components/providers";
 import { PageHeading, Modal, ErrorText } from "../components/ui";
-import { MatchList } from "../components/MatchList";
-import { MatchForm } from "../components/MatchForm";
+import { BreakList } from "../components/BreakList";
+import { BreakForm } from "../components/BreakForm";
 import { Login } from "../components/Login";
 export default function History() {
-  const query = useMatches();
+  const query = useBreaks();
   const auth = useAuth();
   const [who, setWho] = useState("all");
   const [pair, setPair] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
-  const [editing, setEditing] = useState<Match | null>(null);
+  const [editing, setEditing] = useState<BreakSession | null>(null);
   const badRange = Boolean(from && to && from > to);
   const filtered = (query.data || [])
     .filter(
@@ -29,13 +29,13 @@ export default function History() {
   const current = Math.min(page, pages);
   return (
     <>
-      <PageHeading title="Matcher">
-        <span className="tag">{filtered.length} matcher</span>
+      <PageHeading title="Raster">
+        <span className="tag">{filtered.length} raster</span>
       </PageHeading>
       <section className="card filters">
         <div className="filter-heading">
           <SlidersHorizontal size={17} />
-          <h2>Filtrera matcher</h2>
+          <h2>Filtrera raster</h2>
           <button
             onClick={() => {
               setWho("all");
@@ -113,24 +113,24 @@ export default function History() {
       </section>
       <section className="card history-card">
         {!badRange && (
-          <MatchList
-            matches={filtered.slice((current - 1) * 25, current * 25)}
+          <BreakList
+            breaks={filtered.slice((current - 1) * 25, current * 25)}
             onEdit={auth.session ? setEditing : undefined}
           />
         )}
         <div className="history-footer">
-          <span>Spelordningen inom samma dag är okänd.</span>
+          <span>Rasternas ordning inom samma dag är okänd.</span>
           <button
             className="icon-button"
             onClick={() => void query.refetch()}
-            aria-label="Uppdatera matchhistoriken"
+            aria-label="Uppdatera rasthistoriken"
           >
             <RotateCw size={17} />
           </button>
         </div>
       </section>
       {pages > 1 && (
-        <nav className="pagination" aria-label="Sidor i matchhistoriken">
+        <nav className="pagination" aria-label="Sidor i rasthistoriken">
           <button
             className="button secondary"
             disabled={current === 1}
@@ -151,9 +151,9 @@ export default function History() {
         </nav>
       )}
       {editing && (
-        <Modal title="Redigera match" onClose={() => setEditing(null)}>
+        <Modal title="Redigera rast" onClose={() => setEditing(null)}>
           {!auth.session && <Login />}
-          <MatchForm match={editing} onDone={() => setEditing(null)} />
+          <BreakForm rast={editing} onDone={() => setEditing(null)} />
           <button
             className="button ghost full"
             onClick={async () => {

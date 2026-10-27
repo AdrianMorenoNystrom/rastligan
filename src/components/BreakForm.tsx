@@ -1,40 +1,40 @@
 import { useState, useRef } from "react";
 import type { FormEvent } from "react";
 import { Minus, Plus, Check, Trash2, ArrowLeft } from "lucide-react";
-import { PAIRS, player, today, validateMatch, dateLabel } from "../lib/domain";
-import type { Match, MatchInput, PlayerId } from "../lib/domain";
-import { useAuth, useRefreshMatches } from "./providers";
+import { PAIRS, player, today, validateBreak, dateLabel } from "../lib/domain";
+import type { BreakSession, BreakInput, PlayerId } from "../lib/domain";
+import { useAuth, useRefreshBreaks } from "./providers";
 import { ErrorText, Modal } from "./ui";
-export function MatchForm({
-  match,
+export function BreakForm({
+  rast,
   onDone,
 }: {
-  match?: Match;
+  rast?: BreakSession;
   onDone?: () => void;
 }) {
   const auth = useAuth(),
-    refresh = useRefreshMatches();
+    refresh = useRefreshBreaks();
   const [pair, setPair] = useState<[PlayerId, PlayerId] | null>(
-    match ? [match.player1_id, match.player2_id] : null,
+    rast ? [rast.player1_id, rast.player2_id] : null,
   );
   const [scores, setScores] = useState<[number, number]>(
-    match ? [match.score1, match.score2] : [0, 0],
+    rast ? [rast.score1, rast.score2] : [0, 0],
   );
-  const [date, setDate] = useState(match?.played_on || today());
+  const [date, setDate] = useState(rast?.played_on || today());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const attempt = useRef<{ key: string; payload: string } | null>(null);
   const locked = useRef(false);
-  const input: MatchInput = {
+  const input: BreakInput = {
     player1_id: pair?.[0] || "adrian",
     player2_id: pair?.[1] || "dave",
     score1: scores[0],
     score2: scores[1],
     played_on: date,
   };
-  const invalid = validateMatch(input);
+  const invalid = validateBreak(input);
   async function save(e: FormEvent) {
     e.preventDefault();
     if (locked.current || invalid || !pair) return;
@@ -46,17 +46,17 @@ export function MatchForm({
       attempt.current = { key: crypto.randomUUID(), payload };
     try {
       await auth.request({
-        action: match ? "update" : "create",
-        match: {
+        action: rast ? "update" : "create",
+        break: {
           ...input,
-          ...(match ? { id: match.id, updated_at: match.updated_at } : {}),
+          ...(rast ? { id: rast.id, updated_at: rast.updated_at } : {}),
         },
         idempotency_key: attempt.current.key,
       });
       await refresh();
       attempt.current = null;
       setSaved(true);
-      if (match) onDone?.();
+      if (rast) onDone?.();
       else {
         setPair(null);
         setScores([0, 0]);
@@ -69,14 +69,14 @@ export function MatchForm({
     }
   }
   async function remove() {
-    if (locked.current || !match) return;
+    if (locked.current || !rast) return;
     locked.current = true;
     setBusy(true);
     setError("");
     try {
       await auth.request({
         action: "delete",
-        match: { id: match.id, updated_at: match.updated_at },
+        break: { id: rast.id, updated_at: rast.updated_at },
       });
       await refresh();
       onDone?.();
@@ -90,10 +90,10 @@ export function MatchForm({
   }
   return (
     <>
-      {saved && !match && (
+      {saved && !rast && (
         <p role="status" className="notice success">
           <Check size={18} />
-          Match sparad
+          Rast sparad
         </p>
       )}
       {!auth.session && (
@@ -103,8 +103,8 @@ export function MatchForm({
         <fieldset disabled={busy}>
           <legend>Spelarpar</legend>
           <div className="pair-options">
-            {(match
-              ? [[match.player1_id, match.player2_id] as [PlayerId, PlayerId]]
+            {(rast
+              ? [[rast.player1_id, rast.player2_id] as [PlayerId, PlayerId]]
               : pair
                 ? [pair]
                 : PAIRS
@@ -138,7 +138,7 @@ export function MatchForm({
         {pair && (
           <>
             <fieldset disabled={busy}>
-              <legend>Vunna set</legend>
+              <legend>Vunna matcher</legend>
               <div className="score-controls">
                 {pair.map((id, i) => (
                   <div className="score-side" key={id}>
@@ -154,7 +154,7 @@ export function MatchForm({
                       step="1"
                       inputMode="numeric"
                       id={`score-${id}`}
-                      aria-label={`Set för ${player(id).name}`}
+                      aria-label={`Vunna matcher för ${player(id).name}`}
                       value={Number.isNaN(scores[i]) ? "" : scores[i]}
                       onChange={(e) =>
                         setScores(
@@ -207,7 +207,7 @@ export function MatchForm({
             <p className="fine-print score-note">
               Oavgjort är tillåtet, men inte 0–0.
             </p>
-            <label htmlFor="played-on">Matchdatum</label>
+            <label htmlFor="played-on">Rastdatum</label>
             <input
               id="played-on"
               type="date"
@@ -224,9 +224,9 @@ export function MatchForm({
               disabled={busy || Boolean(invalid) || !auth.session}
             >
               <Check size={20} />
-              {busy ? "Sparar…" : match ? "Spara ändringar" : "Spara match"}
+              {busy ? "Sparar…" : rast ? "Spara ändringar" : "Spara rast"}
             </button>
-            {!match && (
+            {!rast && (
               <button
                 type="button"
                 disabled={busy}
@@ -243,7 +243,7 @@ export function MatchForm({
             )}
           </>
         )}
-        {match && (
+        {rast && (
           <button
             type="button"
             disabled={busy || !auth.session}
@@ -251,23 +251,23 @@ export function MatchForm({
             onClick={() => setConfirm(true)}
           >
             <Trash2 size={17} />
-            Ta bort match
+            Ta bort rast
           </button>
         )}
       </form>
-      {confirm && match && (
+      {confirm && rast && (
         <Modal
-          title="Ta bort match?"
+          title="Ta bort rast?"
           onClose={() => {
             if (!busy) setConfirm(false);
           }}
         >
           <p>
-            {player(match.player1_id).name} – {player(match.player2_id).name},{" "}
-            {match.score1}–{match.score2}
+            {player(rast.player1_id).name} – {player(rast.player2_id).name},{" "}
+            {rast.score1}–{rast.score2}
           </p>
           <p className="muted">
-            {dateLabel(match.played_on)}. Matchen tas bort permanent.
+            {dateLabel(rast.played_on)}. Rasten tas bort permanent.
           </p>
           <div className="dialog-actions">
             <button

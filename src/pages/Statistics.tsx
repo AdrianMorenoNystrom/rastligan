@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { CalendarDays, ArrowUpRight, ChevronDown, Info } from "lucide-react";
-import { useMatches } from "../components/providers";
+import { useBreaks } from "../components/providers";
 import { PageHeading, Metrics, Empty, ErrorText } from "../components/ui";
 import {
   PLAYERS,
@@ -15,7 +15,7 @@ import {
   weekday,
   isPlayer,
 } from "../lib/domain";
-import type { DateRange, Match, PlayerId } from "../lib/domain";
+import type { DateRange, BreakSession, PlayerId } from "../lib/domain";
 import {
   standings,
   summary,
@@ -27,7 +27,11 @@ import {
   compareThirtyDays,
   records,
 } from "../lib/statistics";
-import type { Resolution, RecordGroup } from "../lib/statistics";
+import type {
+  Resolution,
+  RecordGroup,
+  PerformanceMetric,
+} from "../lib/statistics";
 const Chart = lazy(() => import("../components/Charts"));
 const tabs = [
   ["oversikt", "Översikt"],
@@ -109,27 +113,31 @@ function Overview({
   selected,
   range,
 }: {
-  all: Match[];
-  selected: Match[];
+  all: BreakSession[];
+  selected: BreakSession[];
   range: DateRange;
 }) {
   const s = summary(selected);
   const [resolution, setResolution] = useState<Resolution | null>(null);
   const res = resolution || resolutionFor(all, range);
+  const [activityMetric, setActivityMetric] = useState<"breaks" | "matches">(
+    "breaks",
+  );
   return (
     <>
       <Metrics
         items={[
-          { label: "Matcher", value: s.matches },
+          { label: "Raster", value: s.breaks },
+          { label: "Spelade matcher", value: s.matchesPlayed },
           {
-            label: "Oavgjort",
-            value: fmtPercent(s.drawPercent),
-            hint: `${s.matches} matcher`,
+            label: "Oavgjorda raster",
+            value: fmtPercent(s.breakDrawPercent),
+            hint: `${s.breaks} raster`,
           },
           {
-            label: "Set per match",
-            value: format(s.setsPerMatch),
-            hint: `${s.matches} matcher`,
+            label: "Matcher per rast",
+            value: format(s.matchesPerBreak),
+            hint: `${s.breaks} raster`,
           },
           {
             label: "Aktiva speldagar",
@@ -155,32 +163,50 @@ function Overview({
         </select>
       </div>
       <Chart
-        title="Prestationsutveckling"
-        description="P/M = poäng per match i perioden. Luckor visar saknade matcher."
+        title="Poäng per rast över tid"
+        description="P/R = poäng per rast i perioden. Luckor visar perioder utan raster."
         data={performance(all, range, res)}
         max={3}
       />
       <div className="chart-grid">
         <Chart
-          title="Matchaktivitet"
-          description={`Matcher per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
+          title={
+            activityMetric === "breaks" ? "Rastaktivitet" : "Matchaktivitet"
+          }
+          description={`${activityMetric === "breaks" ? "Raster" : "Individuella matcher"} per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
           data={performance(all, range, res)}
           activity
+          activityMetric={activityMetric}
+          controls={
+            <label className="activity-selector">
+              Aktivitet
+              <select
+                aria-label="Aktivitetsmått"
+                value={activityMetric}
+                onChange={(e) =>
+                  setActivityMetric(e.target.value as "breaks" | "matches")
+                }
+              >
+                <option value="breaks">Raster</option>
+                <option value="matches">Individuella matcher</option>
+              </select>
+            </label>
+          }
         />
         <Chart
-          title="Poängutveckling"
+          title="Ligapoäng över tid"
           description="Totalpoäng vid dagens slut, inklusive poäng före vald period."
           data={cumulative(all, range)}
           step
           unit="poäng"
         />
       </div>
-      <ActivityCalendar matches={selected} />
+      <ActivityCalendar breaks={selected} />
     </>
   );
 }
-function ActivityCalendar({ matches }: { matches: Match[] }) {
-  const dates = matches.map((m) => m.played_on).sort();
+function ActivityCalendar({ breaks }: { breaks: BreakSession[] }) {
+  const dates = breaks.map((m) => m.played_on).sort();
   const [start, setStart] = useState("");
   const month = start || dates.at(-1)?.slice(0, 7) || today().slice(0, 7);
   const first = month + "-01";
@@ -188,7 +214,7 @@ function ActivityCalendar({ matches }: { matches: Match[] }) {
   next.setUTCMonth(next.getUTCMonth() + 1);
   const days = Number(dayAdd(next.toISOString().slice(0, 10), -1).slice(-2));
   const counts = new Map<string, number>();
-  matches.forEach((m) =>
+  breaks.forEach((m) =>
     counts.set(m.played_on, (counts.get(m.played_on) || 0) + 1),
   );
   const [chosen, setChosen] = useState("");
@@ -234,7 +260,7 @@ function ActivityCalendar({ matches }: { matches: Match[] }) {
                     }
                   : undefined
               }
-              aria-label={`${date}: ${n} matcher`}
+              aria-label={`${date}: ${n} raster`}
               aria-pressed={chosen === date}
               onClick={() => setChosen(date)}
             >
@@ -246,8 +272,8 @@ function ActivityCalendar({ matches }: { matches: Match[] }) {
       </div>
       <p className="fine-print calendar-detail" role="status">
         {chosen
-          ? `${chosen}: ${counts.get(chosen) || 0} matcher i urvalet.`
-          : "Välj dag för antal matcher."}
+          ? `${chosen}: ${counts.get(chosen) || 0} raster i urvalet.`
+          : "Välj dag för antal raster."}
       </p>
     </section>
   );
@@ -258,14 +284,21 @@ function Profile({
   range,
   id,
 }: {
-  all: Match[];
-  selected: Match[];
+  all: BreakSession[];
+  selected: BreakSession[];
   range: DateRange;
   id: PlayerId;
 }) {
   const s = standings(selected).find((s) => s.id === id)!;
   const [resolution, setResolution] = useState<Resolution>("week");
-  const [metric, setMetric] = useState<"ppm" | "winPercent">("ppm");
+  const [metric, setMetric] = useState<PerformanceMetric>("ppr");
+  const metricLabels: Record<PerformanceMetric, string> = {
+    ppr: "Poäng per rast",
+    breakWinPercent: "Rastvinstprocent",
+    matchWinPercent: "Matchvinstprocent",
+    matchDifferencePerBreak: "Matchskillnad per rast",
+    matchesWonPerBreak: "Vunna matcher per rast",
+  };
   const patterns = resultPatterns(selected, id);
   const weekdays = weekdayPerformance(selected, id);
   const comparison = compareThirtyDays(all, id, today(), range);
@@ -291,33 +324,33 @@ function Profile({
         <div>
           <h2>{player(id).name}</h2>
         </div>
-        {s.matches > 0 && s.matches < 5 && (
+        {s.breaks > 0 && s.breaks < 5 && (
           <span className="tag warning">Litet underlag</span>
         )}
       </div>
       <Metrics
         items={[
-          { label: "Matcher", value: s.matches },
-          { label: "Poäng", value: s.points },
-          { label: "P/M", value: format(s.ppm), hint: `${s.matches} matcher` },
+          { label: "Raster", value: s.breaks },
+          { label: "Ligapoäng", value: s.points },
+          { label: "P/R", value: format(s.ppr), hint: `${s.breaks} raster` },
           {
-            label: "Vinstprocent",
-            value: fmtPercent(s.winPercent),
-            hint: `${s.matches} matcher`,
+            label: "Rastvinstprocent",
+            value: fmtPercent(s.breakWinPercent),
+            hint: `${s.breaks} raster`,
           },
         ]}
       />
       <div className="two-column">
         <section className="card">
-          <h2>Resultat</h2>
+          <h2>Raster</h2>
           <dl className="stat-list">
             {[
-              ["Vinster", s.wins],
-              ["Oavgjorda", s.draws],
-              ["Förluster", s.losses],
-              ["Vinstprocent", fmtPercent(s.winPercent)],
-              ["Oavgjortandel", fmtPercent(s.drawPercent)],
-              ["Förlustprocent", fmtPercent(s.lossPercent)],
+              ["Vunna raster", s.wins],
+              ["Oavgjorda raster", s.draws],
+              ["Förlorade raster", s.losses],
+              ["Rastvinstprocent", fmtPercent(s.breakWinPercent)],
+              ["Oavgjortandel", fmtPercent(s.breakDrawPercent)],
+              ["Förlustprocent", fmtPercent(s.breakLossPercent)],
             ].map(([label, value]) => (
               <div key={label}>
                 <dt>{label}</dt>
@@ -329,43 +362,46 @@ function Profile({
             className="outcome-bar"
             aria-label={`${s.wins} vinster, ${s.draws} oavgjorda, ${s.losses} förluster`}
           >
-            {s.matches > 0 && (
+            {s.breaks > 0 && (
               <>
                 <span
                   style={{
-                    width: `${(s.wins / s.matches) * 100}%`,
+                    width: `${(s.wins / s.breaks) * 100}%`,
                     background: "#bef26d",
                   }}
                 />
                 <span
                   style={{
-                    width: `${(s.draws / s.matches) * 100}%`,
+                    width: `${(s.draws / s.breaks) * 100}%`,
                     background: "#a5b7c9",
                   }}
                 />
                 <span
                   style={{
-                    width: `${(s.losses / s.matches) * 100}%`,
+                    width: `${(s.losses / s.breaks) * 100}%`,
                     background: "#d4a1ff",
                   }}
                 />
               </>
             )}
           </div>
-          <p className="fine-print">
-            Fördelning V / O / F · {s.matches} matcher
-          </p>
+          <p className="fine-print">Fördelning V / O / F · {s.breaks} raster</p>
         </section>
         <section className="card">
-          <h2>Setstatistik</h2>
+          <h2>Matcher</h2>
           <dl className="stat-list">
             {[
-              ["Vunna / förlorade set", `${s.setsWon} / ${s.setsLost}`],
-              ["Setskillnad", s.setDifference],
-              ["Setskillnad / match", format(s.setDifferencePerMatch)],
-              ["Vunna set / match", format(s.setsWonPerMatch)],
-              ["Förlorade set / match", format(s.setsLostPerMatch)],
-              ["Set / match", format(s.setsPerMatch)],
+              ["Spelade matcher", s.matchesPlayed],
+              ["Matchvinstprocent", fmtPercent(s.matchWinPercent)],
+              [
+                "Vunna / förlorade matcher",
+                `${s.matchesWon} / ${s.matchesLost}`,
+              ],
+              ["Matchskillnad", s.matchDifference],
+              ["Matchskillnad / rast", format(s.matchDifferencePerBreak)],
+              ["Vunna matcher / rast", format(s.matchesWonPerBreak)],
+              ["Förlorade matcher / rast", format(s.matchesLostPerBreak)],
+              ["Matcher / rast", format(s.matchesPerBreak)],
               [
                 "Marginal vid vinst",
                 `${format(s.winMargin)} (${s.wins} vinster)`,
@@ -389,10 +425,13 @@ function Profile({
           <select
             aria-label="Spelarens utvecklingsmått"
             value={metric}
-            onChange={(e) => setMetric(e.target.value as "ppm" | "winPercent")}
+            onChange={(e) => setMetric(e.target.value as PerformanceMetric)}
           >
-            <option value="ppm">Poäng per match</option>
-            <option value="winPercent">Vinstprocent</option>
+            {Object.entries(metricLabels).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -409,11 +448,20 @@ function Profile({
       </div>
       <Chart
         title="Utveckling"
-        description={`${metric === "ppm" ? "Poäng per match" : "Vinstprocent"}, ${resolution === "week" ? "veckovis" : "månadsvis"}.`}
+        description={`${metricLabels[metric]}, ${resolution === "week" ? "veckovis" : "månadsvis"}.`}
         data={performance(all, range, resolution, metric)}
         players={[id]}
-        unit={metric === "ppm" ? "P/M" : "%"}
-        max={metric === "ppm" ? 3 : 100}
+        unit={
+          metric === "ppr"
+            ? "P/R"
+            : metric.endsWith("Percent")
+              ? "%"
+              : "matcher/rast"
+        }
+        max={
+          metric === "ppr" ? 3 : metric.endsWith("Percent") ? 100 : undefined
+        }
+        matchSample={metric === "matchWinPercent"}
       />
       <section className="card">
         <h2>Senaste 30 kalenderdagarna</h2>
@@ -424,17 +472,17 @@ function Profile({
         <Metrics
           items={[
             {
-              label: "P/M senaste 30",
-              value: format(comparison.current.ppm),
-              hint: `${comparison.current.matches} matcher`,
+              label: "P/R senaste 30",
+              value: format(comparison.current.ppr),
+              hint: `${comparison.current.breaks} raster`,
             },
             {
-              label: "P/M föregående 30",
-              value: format(comparison.previous.ppm),
-              hint: `${comparison.previous.matches} matcher`,
+              label: "P/R föregående 30",
+              value: format(comparison.previous.ppr),
+              hint: `${comparison.previous.breaks} raster`,
             },
             {
-              label: "Förändring i P/M",
+              label: "Förändring i P/R",
               value:
                 comparison.delta === null
                   ? "–"
@@ -452,25 +500,27 @@ function Profile({
           <h2>Resultatmönster</h2>
           <dl className="stat-list">
             <div>
-              <dt>Matcher med ett sets marginal</dt>
+              <dt>Raster med en matchs marginal</dt>
               <dd>{fmtPercent(s.closePercent)}</dd>
             </div>
             <div>
-              <dt>Genomsnittlig setmarginal</dt>
+              <dt>Genomsnittlig matchmarginal</dt>
               <dd>{format(s.margin)}</dd>
             </div>
           </dl>
           <p className="fine-print">
-            Marginal anges utan minustecken. Underlag: {s.matches} matcher.
+            Marginal anges utan minustecken. Underlag: {s.breaks} raster.
           </p>
           <h3>Vanligaste slutresultat</h3>
-          <p className="fine-print">{player(id).name}s set visas först.</p>
+          <p className="fine-print">
+            {player(id).name}s matchvinster visas först.
+          </p>
           {patterns.length ? (
             <ol className="pattern-list">
               {patterns.slice(0, 8).map((r) => (
                 <li key={r.label}>
                   <strong>{r.label}</strong>
-                  <span>{r.count} matcher</span>
+                  <span>{r.count} raster</span>
                 </li>
               ))}
             </ol>
@@ -484,24 +534,24 @@ function Profile({
             <thead>
               <tr>
                 <th>Dag</th>
-                <th>M</th>
-                <th>P/M</th>
-                <th>Vinst %</th>
+                <th>R</th>
+                <th>P/R</th>
+                <th>Rastvinst %</th>
               </tr>
             </thead>
             <tbody>
               {weekdays.map((d) => (
                 <tr key={d.label}>
                   <th>{d.label}</th>
-                  <td>{d.matches}</td>
-                  <td>{format(d.ppm)}</td>
-                  <td>{format(d.winPercent, 1)}</td>
+                  <td>{d.breaks}</td>
+                  <td>{format(d.ppr)}</td>
+                  <td>{format(d.breakWinPercent, 1)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className="fine-print">
-            M = matcher. Färre än 5 ger litet underlag.
+            R = raster. Färre än 5 raster ger litet underlag.
           </p>
         </section>
       </div>
@@ -514,8 +564,8 @@ function Duel({
   range,
   pairKey,
 }: {
-  all: Match[];
-  selected: Match[];
+  all: BreakSession[];
+  selected: BreakSession[];
   range: DateRange;
   pairKey: string;
 }) {
@@ -547,7 +597,7 @@ function Duel({
           <h2 style={{ color: player(a).color }}>{player(a).name}</h2>
           <div>
             <strong>{data.length}</strong>
-            <span>inbördes matcher</span>
+            <span>inbördes raster</span>
           </div>
           <h2 style={{ color: player(b).color }}>{player(b).name}</h2>
         </div>
@@ -561,19 +611,25 @@ function Duel({
           </thead>
           <tbody>
             {[
-              ["Vinster", left.wins, right.wins],
-              ["Oavgjorda", left.draws, right.draws],
+              ["Vunna raster", left.wins, right.wins],
+              ["Oavgjorda raster", left.draws, right.draws],
               [
-                "Vinstprocent",
-                fmtPercent(left.winPercent),
-                fmtPercent(right.winPercent),
+                "Rastvinstprocent",
+                fmtPercent(left.breakWinPercent),
+                fmtPercent(right.breakWinPercent),
               ],
-              ["Poäng / match", format(left.ppm), format(right.ppm)],
-              ["Vunna set", left.setsWon, right.setsWon],
+              ["Poäng / rast", format(left.ppr), format(right.ppr)],
+              ["Vunna matcher", left.matchesWon, right.matchesWon],
               [
-                "Setskillnad / match",
-                format(left.setDifferencePerMatch),
-                format(right.setDifferencePerMatch),
+                "Matchvinstprocent",
+                fmtPercent(left.matchWinPercent),
+                fmtPercent(right.matchWinPercent),
+              ],
+              ["Spelade matcher", left.matchesPlayed, right.matchesPlayed],
+              [
+                "Matchskillnad / rast",
+                format(left.matchDifferencePerBreak),
+                format(right.matchDifferencePerBreak),
               ],
             ].map(([label, v1, v2]) => (
               <tr key={label}>
@@ -585,13 +641,13 @@ function Duel({
           </tbody>
         </table>
         <p className="fine-print centered">
-          Underlag: {data.length} matcher per spelare.
+          Underlag: {data.length} raster per spelare.
           {data.length > 0 && data.length < 5 ? " Litet underlag." : ""}
         </p>
       </section>
       <div className="chart-grid">
         <Chart
-          title="Poäng inom duellen"
+          title="Ligapoäng inom duellen"
           description="Inbördes totalpoäng vid dagens slut."
           data={cumulative(allPair, range)}
           step
@@ -600,7 +656,7 @@ function Duel({
         />
         <Chart
           title="Månadsvis prestation"
-          description="Poäng per match och månad."
+          description="Poäng per rast och månad."
           data={performance(allPair, range, "month")}
           players={pair}
           max={3}
@@ -609,19 +665,19 @@ function Duel({
       <section className="card">
         <h2>Vanligaste slutresultat</h2>
         <p className="muted">
-          {player(a).name}s set först. Underlag: {data.length} matcher.
+          {player(a).name}s matchvinster först. Underlag: {data.length} raster.
         </p>
         {patterns.length ? (
           <ol className="pattern-list">
             {patterns.map((r) => (
               <li key={r.label}>
                 <strong>{r.label}</strong>
-                <span>{r.count} matcher</span>
+                <span>{r.count} raster</span>
               </li>
             ))}
           </ol>
         ) : (
-          <Empty title="Inga matcher i urvalet" />
+          <Empty title="Inga raster i urvalet" />
         )}
       </section>
     </>
@@ -637,8 +693,8 @@ function RecordCard({ group }: { group: RecordGroup }) {
         {group.performance && (
           <span className="tag">
             {group.title.includes("förbättring")
-              ? "Minst 5 matcher i båda månaderna"
-              : "Minst 5 matcher/månad"}
+              ? "Minst 5 raster i båda månaderna"
+              : "Minst 5 raster/månad"}
           </span>
         )}
       </div>
@@ -656,7 +712,7 @@ function RecordCard({ group }: { group: RecordGroup }) {
                   <small>
                     {r.detail !== r.label ? r.detail : null}
                     {r.count !== undefined
-                      ? ` · ${r.count} matcher${group.title.includes("förbättring") ? " eller fler i vardera månaden" : ""}`
+                      ? ` · ${r.count} raster${group.title.includes("förbättring") ? " eller fler i vardera månaden" : ""}`
                       : ""}
                   </small>
                 )}
@@ -690,7 +746,7 @@ function RecordCard({ group }: { group: RecordGroup }) {
   );
 }
 export default function Statistics() {
-  const all = useMatches().data || [];
+  const all = useBreaks().data || [];
   const { section = "oversikt", id = "adrian" } = useParams();
   const [search, setSearch] = useSearchParams();
   const preset = search.get("period") || "all";
@@ -748,7 +804,7 @@ export default function Statistics() {
             <>
               <p className="info-note">
                 <Info size={17} />
-                Prestationsrekord kräver minst 5 matcher per spelare och
+                Prestationsrekord kräver minst 5 raster per spelare och
                 kalendermånad. Datumfiltret gäller även rekord.
               </p>
               <div className="records-grid">

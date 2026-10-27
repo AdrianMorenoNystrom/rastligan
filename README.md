@@ -2,7 +2,7 @@
 
 [Repository på GitHub](https://github.com/AdrianMorenoNystrom/rastligan) · [Verifierad leveransstatus](DELIVERY.md)
 
-Mobilanpassad pingisliga för Adrian, Dave och Elias. Publik ligatabell, matchhistorik, spelarprofiler, dueller och interaktiva diagram. Personliga koder ger samma rätt att skapa, ändra och ta bort matcher. Vinst ger 3 poäng, oavgjort 1.
+Mobilanpassad pingisliga för Adrian, Dave och Elias. Publik ligatabell, rasthistorik, spelarprofiler, dueller och interaktiva diagram. Personliga koder ger samma rätt att skapa, ändra och ta bort raster. Vunnen rast ger 3 poäng, oavgjord rast 1.
 
 React, strikt TypeScript, Vite, Tailwind CSS, Lucide, Recharts, TanStack Query och HashRouter. Supabase PostgreSQL och en Edge Function hanterar alla skrivningar. Ingen Node-server behövs för produktionsfrontend.
 
@@ -26,7 +26,7 @@ npm run backend:serve
 npm run dev
 ```
 
-Öppna `http://127.0.0.1:5173/`. Utan ansluten databas visas ett tydligt anslutningsfel; inga låtsasmatcher används. Stoppa enbart detta projekts databas med `supabase stop --project-id rastligan`.
+Öppna `http://127.0.0.1:5173/`. Utan ansluten databas visas ett tydligt anslutningsfel; inga låtsasraster används. Stoppa enbart detta projekts databas med `supabase stop --project-id rastligan`.
 
 ## Koder och sessioner
 
@@ -65,7 +65,7 @@ Alla publika tabeller har RLS och endast SELECT-grants till anon/authenticated. 
 
 ## Google Sheets-import
 
-Originalarket har lästs via autentiserad Drive/Sheets-anslutning. Källkopian `data/source-google-sheets.json` innehåller oförändrade värden och ursprungliga radpositioner, avlästa 2026-10-27. Verifierade rubriker: Speldatum, Spelare 1, Spelare 2, Set 1 och Set 2. Det fanns 7 giltiga matcher och 593 tomma registreringsrader; ingen ogiltig ifylld match. Kontrollposten Dave–Elias 2–2, 2026-10-22 finns på källrad 402.
+Originalarket har lästs via autentiserad Drive/Sheets-anslutning. Källkopian `data/source-google-sheets.json` innehåller oförändrade värden och ursprungliga radpositioner, avlästa 2026-10-27. Verifierade rubriker: Speldatum, Spelare 1, Spelare 2, Set 1 och Set 2. Källans äldre kolumnnamn `Set 1`/`Set 2` behålls vid import men värdena betyder individuella matchvinster, inte set. Det fanns 7 giltiga raster och 593 tomma registreringsrader; ingen ogiltig ifylld match. Kontrollposten Dave–Elias 2–2, 2026-10-22 finns på källrad 402.
 
 ```sh
 # Enbart validera källan; ingen databas eller tidigare importkontroll:
@@ -76,9 +76,9 @@ npm run import -- --file data/source-google-sheets.json
 npm run import -- --file data/source-google-sheets.json --apply --report data/import-report.json
 ```
 
-Den första lokala importen gav sju matcher: Elias 9 poäng / 5 matcher, Dave 5 / 4, Adrian 4 / 5. Tre oavgjorda. Upprepad import identifierade sju redan importerade matcher och skapade inga dubbletter.
+Den första lokala importen gav sju raster: Elias 9 poäng / 5 raster, Dave 5 / 4, Adrian 4 / 5. Tre oavgjorda. Upprepad import identifierade sju redan importerade raster och skapade inga dubbletter.
 
-Uppdatering 2026-10-27: en ny hämtning från originalarket innehöll åtta matcher. Alla åtta importerades till produktionsprojektet och den nya matchen lades till i den lokala databasen. Efterkontroll: åtta redan importerade rader, inga ogiltiga eller ändrade rader. Aktuell tabell: Elias 9 poäng / 5 matcher, Dave 8 / 5, Adrian 4 / 6. Den versionshanterade källkopian ovan behåller de ursprungliga sju matcherna som fast underlag för isolerade CI/E2E-tester.
+Uppdatering 2026-10-27: en ny hämtning från originalarket innehöll åtta raster. Alla åtta importerades till produktionsprojektet och den nya rasten lades till i den lokala databasen. Efterkontroll: åtta redan importerade rader, inga ogiltiga eller ändrade rader. Aktuell tabell: Elias 9 poäng / 5 raster, Dave 8 / 5, Adrian 4 / 6. Den versionshanterade källkopian ovan behåller de ursprungliga sju rasterna som fast underlag för isolerade CI/E2E-tester.
 
 Direktläsning stöds med OAuth-token i `GOOGLE_ACCESS_TOKEN`, med scope `https://www.googleapis.com/auth/spreadsheets.readonly` och läsbehörighet till arket:
 
@@ -93,19 +93,25 @@ Alternativ: exportera den oförändrade Data-fliken som CSV eller arbetsboken so
 npm run import -- --file /sökväg/källa.xlsx --sheet Data --source google:1dgEoemh0SxNO0kj02Jv7hAOZS_j5RDz-NcCVunTav8U:240101002
 ```
 
-Använd samma `--source` för samma källflik vid varje körning; CSV måste behålla rubrikrad och tomma radpositioner. `row:N` är det stabila källrad-ID:t. Sortera eller flytta därför inte källrader efter första importen. Ändrade importerade rader flaggas och appliceringen stoppas för granskning. En borttagen importerad match återuppstår inte vid återimport. Två identiska matcher på olika källrader bevaras. Ingen deduplicering sker på datum/resultat. Ändrade rubriker kräver en verifierad JSON-mappning med `--mapping fil.json` (nycklar date/player1/player2/score1/score2). Rapporten listar varje tom, ogiltig, redan importerad eller ändrad källrad; applicering loggas privat i databasen och efterrapporten innehåller tabell och matchantal.
+Använd samma `--source` för samma källflik vid varje körning; CSV måste behålla rubrikrad och tomma radpositioner. `row:N` är det stabila källrad-ID:t. Sortera eller flytta därför inte källrader efter första importen. Ändrade importerade rader flaggas och appliceringen stoppas för granskning. En borttagen importerad rast återuppstår inte vid återimport. Två identiska raster på olika källrader bevaras. Ingen deduplicering sker på datum/resultat. Ändrade rubriker kräver en verifierad JSON-mappning med `--mapping fil.json` (nycklar date/player1/player2/score1/score2). Rapporten listar varje tom, ogiltig, redan importerad eller ändrad källrad; applicering loggas privat i databasen och efterrapporten innehåller tabell och rastantal.
 
 Efter importen läser appen enbart Supabase. Inga fortsatta Sheets-uppdateringar krävs.
 
 ## Statistik och dataintegritet
 
-All statistik räknas från matcher i `src/lib/statistics.ts`. Officiell placering använder poäng, total setskillnad, vunna set, sedan delad plats. P/M påverkar inte placering. Noll matcher ger null/”–” för kvoter. Perioddiagram visar den enskilda periodens P/M och underlag, luckor kopplas inte samman. Poängkurvor summerar vid varje datums slut och tar med historisk ingångsnivå vid filtrering. Datum är SQL date och kalenderberäkningar undviker lokal/UTC-förskjutning. Svensk dag bestäms med Europe/Stockholm, veckor börjar måndag. Inga sviter eller antagen spelordning samma dag beräknas.
+En `BreakSession`/`BreakInput` är en registrerad rast mellan två spelare. `score1` och `score2` är individuella matchvinster: 4–1 betyder en rast och fem matcher. Appen lagrar varken set eller ordningen på matcherna inom rasten. Befintliga registreringar tolkas på samma sätt, utan att delas upp.
 
-Prestationsrekord kräver fem matcher per spelare och kalendermånad; förbättring kräver fem i båda angränsande månaderna. Datumfilter begränsar underlaget även i delvis valda månader. Match- och aktivitetsrekord har ingen femmatchersgräns. Profiler jämför de senaste 30 kalenderdagarna med föregående 30, inom aktivt filter. Förändring visas som absolut skillnad i P/M, aldrig en påhittad procent när underlag saknas.
+`src/lib/statistics.ts` håller isär antal raster, rastvinster/oavgjorda/förluster och individuella matchvinster/förluster. P/R = (3 × rastvinster + oavgjorda raster) / raster. Rastvinstprocent använder raster som nämnare; matchvinstprocent använder vunna / spelade individuella matcher. Matchskillnad är vunna minus förlorade matcher. Matchskillnad per rast och matcher per rast använder antal raster som nämnare. Ligans totala matchantal summerar score1 + score2 en gång per rast.
 
-`league_snapshot()` returnerar ett komplett JSON-värde från en enda databassnapshot med verifierat totalantal. Därmed kan PostgRESTs standardgräns på 1 000 rader inte kapa statistiken eller blanda olika hämtningsögonblick. Historiken visar 25 matcher per sida. Cache uppdateras efter varje skrivning och vid fönsterfokus. För en betydligt större liga bör samma rena beräkningsfunktioner flyttas till servern.
+Officiell placering använder totalpoäng, total matchskillnad, vunna matcher och sedan delad plats. P/R påverkar inte placeringen. Noll underlag ger null/”–”. Perioddiagram visar periodens P/R eller valt matchmått med underlag, med luckor utan raster. Rastaktivitet kan växlas till individuella matcher. Ligapoäng summeras vid varje datums slut med historisk ingångsnivå vid filtrering. Datum är SQL date, svensk dag bestäms med Europe/Stockholm och veckor börjar måndag. Inga sviter eller antagen ordning inom dagen/rasten beräknas.
 
-Skapande använder ett beständigt idempotenskvitto även efter borttagning. Klienten behåller försökets ID vid nätverksfel och spärrar under pågående sparande. Redigering/borttagning använder `updated_at` som versionskontroll, så andras ändringar inte skrivs över utan varning. Matchändring och auditlogg ligger i samma transaktion.
+Prestationsrekord kräver minst fem raster per spelare och kalendermånad, även matchvinstprocent och matchskillnad per rast. Förbättring kräver fem i båda angränsande månaderna. Datumfilter begränsar underlaget även i delvis valda månader. Volymrekord och rekord under en enskild rast har ingen femrastersgräns. Profiler visar raster och matcher var för sig och jämför P/R under de senaste 30 kalenderdagarna med föregående 30 inom aktivt filter.
+
+Migration `202610270005_break_domain.sql` lägger till `break_snapshot()`, som returnerar ett komplett JSON-värde med `breaks` och verifierat `count` från en databassnapshot. Den fysiska tabellen `public.matches`, gamla `league_snapshot()`, skrivrutiner och importloggens fältnamn behålls för kompatibilitet. Inga resultat, ID:n, datum, källreferenser, auditloggar, kodhashar eller sessioner skrivs om. Samma RLS och grants gäller. Edge tar emot `break` och stöder fortsatt äldre klienters `match`. Importens domänobjekt/rapporter använder `break`; adaptern skickar det gamla RPC-formatet så tidigare importer och idempotenskvitton fortsätter fungera. Historiken visar 25 raster per sida; cache uppdateras efter skrivning och vid fönsterfokus.
+
+Vid uppgradering: kör `supabase db push --linked`, publicera Edge-funktionen och därefter frontend. `supabase migration up --local` gäller lokalt. Kör aldrig databasreset vid uppgradering. Den äldre frontend fungerar även med den nya backendversionen.
+
+Skapande använder ett beständigt idempotenskvitto även efter borttagning. Klienten behåller försökets ID vid nätverksfel och spärrar under pågående sparande. Redigering/borttagning använder `updated_at` som versionskontroll, så andras ändringar inte skrivs över utan varning. Raständring och auditlogg ligger i samma transaktion.
 
 ## Tester och visuell granskning
 
@@ -125,13 +131,13 @@ node --env-file=.env.local --env-file=.env.test.local scripts/check-build.mjs
 
 DB-tester kör verkliga SQL-behörigheter, constraints, sessionsflöden och import i en transaktion som rullas tillbaka. HTTP-tester anropar verklig lokal PostgREST och Edge Function. `test:prepare` genererar nya slumpade koder i `.env.test.local` endast för den lokala testligan, återkallar dess gamla sessioner och nollställer lokala försöksräknare. Använd `admin -- bootstrap` för produktionsligan. Testerna vägrar andra backendadresser än 127.0.0.1:55431 och DB-port 55432.
 
-E2E kräver de sju importerade originalmatcherna lokalt och en startad Edge Function. Skapa/ändra/radera-testet tar bort sin tillfälliga testmatch. Browserkontroller körs i 375, 390, 768 och 1440 px, med svensk tidszon, interaktiva diagram och fungerande kodinloggning. Skärmbilder finns i `artifacts/screenshots/`, rapport i `playwright-report/`.
+E2E kräver de sju importerade originalrasterna lokalt och en startad Edge Function. Skapa/ändra/radera-testet tar bort sin tillfälliga testrast. Browserkontroller körs i 375, 390, 768 och 1440 px, med svensk tidszon, interaktiva diagram och fungerande kodinloggning. Skärmbilder finns i `artifacts/screenshots/`, rapport i `playwright-report/`.
 
 ## Produktionsdrift
 
 1. Anslut ett eget Supabase-projekt. Kör `supabase login`, sätt `SUPABASE_PROJECT_REF` och `SUPABASE_DB_PASSWORD` i den lokala miljön, och kör `npm run backend:deploy`. Alternativt använd workflow ”Supabase deployment” med GitHub-secrets `SUPABASE_ACCESS_TOKEN` och `SUPABASE_DB_PASSWORD`, repository variable `SUPABASE_PROJECT_REF`. Endast detta projekts migrationer och Edge Function distribueras; inga externa resurser raderas.
 2. Sätt Edge-secrets `ALLOWED_ORIGINS=https://DITT-NAMN.github.io` (origin utan repository-sökväg) och en slumpad `RATE_LIMIT_PEPPER` med minst 32 tecken, exempelvis med `supabase secrets set --env-file /privat/sökväg/edge.env --project-ref PROJEKTREF`. Service-role och URL tillhandahålls av Supabase på servern. Lägg aldrig service-role i `VITE_`.
-3. Sätt produktions-`SUPABASE_URL` och `SUPABASE_SERVICE_ROLE_KEY` i lokal ignorerad miljö. Kör `admin -- bootstrap`, förhandsgranska/importera originalmatcherna och spara koderna privat. Kontrollera rapporten och att publika REST-skrivningar nekas.
+3. Sätt produktions-`SUPABASE_URL` och `SUPABASE_SERVICE_ROLE_KEY` i lokal ignorerad miljö. Kör `admin -- bootstrap`, förhandsgranska/importera originalrasterna och spara koderna privat. Kontrollera rapporten och att publika REST-skrivningar nekas.
 4. I GitHub repository variables: sätt `VITE_SUPABASE_URL` och `VITE_SUPABASE_PUBLISHABLE_KEY` till produktionsvärden. I Settings → Pages välj GitHub Actions. Workflow ”GitHub Pages” bygger, testar och publicerar med repositoryns korrekta Vite base-sökväg och HashRouter. Automatisk publicering sker efter lyckat ”Quality”; utan backendvariabler hoppas deployment över. Ingen trasig tom frontend publiceras av misstag.
 
 ”Quality” installerar beroenden, kör typkontroll/lint/enhetstester, startar en isolerad Supabase, kör databas-/HTTP-/E2E-tester, bygger och söker efter serverhemligheter i bygget. PostgreSQL-migrationer och Edge-funktioner ligger under `supabase/`. Pages bygger enbart statiska filer från `dist/`. GitHub Pages för ett privat repository kräver en GitHub-plan som stöder det; annars kan ägaren välja offentlig repositorysynlighet.
@@ -145,7 +151,7 @@ CI använder Supabase CLI 2.122.0, autentiserad GHCR-hämtning och cache för Do
 - **401 före kodkontroll:** kontrollera att editor har `verify_jwt=false` och att rätt publishable key används. Egna sessionskontroller får aldrig tas bort.
 - **403 origin_denied:** origin innehåller protokoll och domän/port men ingen sökväg eller avslutande `/`.
 - **För många försök:** vänta 15 minuter. Det finns ingen klientbaserad genväg runt servergränsen.
-- **Matchen har ändrats:** välj ”Hämta aktuell version” i redigeringsdialogen och granska ändringen innan du sparar.
+- **Rasten har ändrats:** välj ”Hämta aktuell version” i redigeringsdialogen och granska ändringen innan du sparar.
 - **Lokal CLI start misslyckas i Storage/GoTrue:** de tjänsterna används inte av Rastligans egna sessionsflöde. Använd exkluderingslistan ovan; annan lokal Supabase behöver inte stoppas.
 - **Import visar source_changed:** granska raden mot ursprungsrapporten. Skriptet skriver inte över tidigare importerade resultat automatiskt.
 

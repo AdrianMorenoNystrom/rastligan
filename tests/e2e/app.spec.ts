@@ -55,9 +55,20 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   await expect(
     page
       .locator(".metric")
-      .filter({ hasText: /^Matcher/ })
+      .filter({ hasText: /^Raster/ })
       .locator("strong"),
   ).toHaveText("5");
+  await page
+    .getByLabel("Spelarens utvecklingsmått", { exact: true })
+    .selectOption("matchWinPercent");
+  const playerChart = page.locator(".chart-card").first();
+  await expect(playerChart).toContainText("Matchvinstprocent");
+  await playerChart.locator("summary").click();
+  await expect(playerChart.locator("tbody")).toContainText("matcher");
+  await playerChart.locator("summary").click();
+  await page
+    .getByLabel("Spelarens utvecklingsmått", { exact: true })
+    .selectOption("ppr");
   await capture(page, {
     path: `artifacts/screenshots/profil-${info.project.name}.png`,
     fullPage: true,
@@ -65,9 +76,29 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   await page.getByRole("link", { name: "Översikt", exact: true }).click();
   const performance = page.locator(".chart-card").first();
   await expect(
-    performance.getByRole("heading", { name: "Prestationsutveckling" }),
+    performance.getByRole("heading", { name: "Poäng per rast över tid" }),
   ).toBeVisible();
   await expect(performance.locator(".recharts-surface")).toBeVisible();
+  const activity = page.locator(".chart-card").nth(1);
+  await activity.locator("summary").click();
+  const activityValues = () =>
+    activity
+      .locator("tbody td")
+      .evaluateAll((cells) =>
+        cells.reduce((sum, c) => sum + Number(c.textContent), 0),
+      );
+  expect(await activityValues()).toBe(7);
+  await page
+    .getByLabel("Aktivitetsmått", { exact: true })
+    .selectOption("matches");
+  await expect(
+    activity.getByRole("heading", { name: "Matchaktivitet", exact: true }),
+  ).toBeVisible();
+  expect(await activityValues()).toBe(27);
+  await page
+    .getByLabel("Aktivitetsmått", { exact: true })
+    .selectOption("breaks");
+  await activity.locator("summary").click();
   await performance.getByRole("button", { name: "Dave", exact: true }).click();
   await expect(
     performance.getByRole("button", { name: "Dave", exact: true }),
@@ -86,7 +117,7 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   });
   await page.getByRole("link", { name: "Dueller", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Poäng inom duellen" }),
+    page.getByRole("heading", { name: "Ligapoäng inom duellen" }),
   ).toBeVisible();
   await page.locator(".duel-selector a").last().click();
   await expect(page.locator(".duel-heading")).toContainText("Dave");
@@ -97,18 +128,18 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   });
   await page.getByRole("link", { name: "Rekord", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Högst P/M per månad" }),
+    page.getByRole("heading", { name: "Högst P/R per månad" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Största setsegrar" }),
+    page.getByRole("heading", { name: "Största matchskillnad under en rast" }),
   ).toBeVisible();
   await capture(page, {
     path: `artifacts/screenshots/rekord-${info.project.name}.png`,
     fullPage: true,
   });
-  await page.goto("/#/matcher");
+  await page.goto("/#/raster");
   await expect(
-    page.getByRole("heading", { name: "Matcher", exact: true }),
+    page.getByRole("heading", { name: "Raster", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("combobox", { name: "Spelarpar", exact: true })
@@ -134,7 +165,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
   try {
     await page.goto("/");
     await page
-      .getByRole("link", { name: "Registrera match", exact: true })
+      .getByRole("link", { name: "Registrera rast", exact: true })
       .click();
     await expect(page.getByLabel("Personlig kod")).toBeVisible();
     await capture(page, {
@@ -150,18 +181,16 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       .getByRole("button", { name: "Adrian mot Dave", exact: true })
       .click();
     await expect(
-      page.getByRole("button", { name: "Spara match", exact: true }),
+      page.getByRole("button", { name: "Spara rast", exact: true }),
     ).toBeDisabled();
     await page.getByRole("button", { name: "Öka Adrian" }).click();
-    await page.getByLabel("Matchdatum", { exact: true }).fill(date);
+    await page.getByLabel("Rastdatum", { exact: true }).fill(date);
     await capture(page, {
       path: `artifacts/screenshots/registrera-${info.project.name}.png`,
       fullPage: true,
     });
-    await page
-      .getByRole("button", { name: "Spara match", exact: true })
-      .click();
-    await expect(page.getByRole("status")).toContainText("Match sparad");
+    await page.getByRole("button", { name: "Spara rast", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("Rast sparad");
     const snapshot = await admin.rpc("league_snapshot");
     expect(snapshot.data.count).toBe(initialCount + 1);
     id = snapshot.data.matches.find(
@@ -176,16 +205,16 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
     ).toContainText("7");
     await page.reload();
     await expect(page.locator(".editor-button")).toContainText("Adrian");
-    await page.goto("/#/matcher");
+    await page.goto("/#/raster");
     await page.getByLabel("Från datum").fill(date);
     await page.getByLabel("Till datum").fill(date);
     await expect(page.locator(".match-row")).toHaveCount(1);
     await page
       .getByRole("button", { name: /Redigera Adrian mot Dave/ })
       .click();
-    await page.getByLabel("Set för Adrian").fill("2");
-    await page.getByLabel("Set för Dave").fill("2");
-    await page.getByLabel("Matchdatum", { exact: true }).fill("2001-02-04");
+    await page.getByLabel("Vunna matcher för Adrian").fill("2");
+    await page.getByLabel("Vunna matcher för Dave").fill("2");
+    await page.getByLabel("Rastdatum", { exact: true }).fill("2001-02-04");
     await page
       .getByRole("button", { name: "Spara ändringar", exact: true })
       .click();
@@ -199,16 +228,16 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
     expect(edited.played_on).toBe("2001-02-04");
     await page.goto("/#/statistik/spelare/adrian");
     await expect(
-      page.locator(".metric").filter({ hasText: "Poäng" }).first(),
+      page.locator(".metric").filter({ hasText: "Ligapoäng" }).first(),
     ).toContainText("5");
-    await page.goto("/#/matcher");
+    await page.goto("/#/raster");
     await page.getByLabel("Från datum").fill("2001-02-04");
     await page.getByLabel("Till datum").fill("2001-02-04");
     await page
       .getByRole("button", { name: /Redigera Adrian mot Dave/ })
       .click();
     await page
-      .getByRole("button", { name: "Ta bort match", exact: true })
+      .getByRole("button", { name: "Ta bort rast", exact: true })
       .click();
     await page
       .getByRole("button", { name: "Ja, ta bort", exact: true })

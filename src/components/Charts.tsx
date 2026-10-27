@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import type { ReactNode } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -20,6 +21,9 @@ interface Props {
   description?: string;
   data: ChartRow[];
   activity?: boolean;
+  activityMetric?: "breaks" | "matches";
+  matchSample?: boolean;
+  controls?: ReactNode;
   unit?: string;
   players?: PlayerId[];
   max?: number;
@@ -30,12 +34,19 @@ export default function ChartCard({
   description,
   data,
   activity = false,
-  unit = "P/M",
+  activityMetric = "breaks",
+  matchSample = false,
+  controls,
+  unit = "P/R",
   players = PLAYERS.map((p) => p.id),
   max,
   step = false,
 }: Props) {
   const [hidden, setHidden] = useState<PlayerId[]>([]);
+  const activityLabel = activityMetric === "breaks" ? "Raster" : "Matcher";
+  const activityKey = activityMetric === "breaks" ? "count" : "matchesPlayed";
+  const sample = (row: ChartRow, p: PlayerId) =>
+    `${row[`${p}_count`]} raster${matchSample ? ` · ${row[`${p}_matches`]} matcher` : ""}`;
   const id = useId();
   const chartData = data.map((row) => ({
     ...row,
@@ -62,8 +73,8 @@ export default function ChartCard({
         <strong>{row?.date ? dateLabel(row.date) : ""}</strong>
         {payload.map((p) => (
           <div key={String(p.dataKey)}>
-            {p.dataKey === "count"
-              ? "Matcher"
+            {activity
+              ? activityLabel
               : PLAYERS.find((x) => x.id === p.dataKey)?.name}
             :{" "}
             <b>
@@ -74,7 +85,7 @@ export default function ChartCard({
             </b>{" "}
             {activity ? "" : unit}
             {!activity && row && (
-              <small>{row[`${p.dataKey as PlayerId}_count`]} matcher</small>
+              <small>{sample(row, p.dataKey as PlayerId)}</small>
             )}
           </div>
         ))}
@@ -106,7 +117,7 @@ export default function ChartCard({
         tick={{ fill: "#a5b7c9", fontSize: 11 }}
         axisLine={false}
         tickLine={false}
-        domain={max ? [0, max] : ["auto", "auto"]}
+        domain={max ? [0, max] : activity ? [0, "auto"] : ["auto", "auto"]}
         allowDecimals={!activity}
       />
       <Tooltip
@@ -122,8 +133,9 @@ export default function ChartCard({
           <h2 id={id}>{title}</h2>
           {description && <p>{description}</p>}
         </div>
-        <span className="chart-unit">{activity ? "Matcher" : unit}</span>
+        <span className="chart-unit">{activity ? activityLabel : unit}</span>
       </div>
+      {controls}
       {!activity && (
         <div className="chart-legend" aria-label="Visa eller dölj spelare">
           {PLAYERS.filter((p) => players.includes(p.id)).map((p) => (
@@ -144,7 +156,7 @@ export default function ChartCard({
         </div>
       )}
       {!data.length ? (
-        <Empty title="Inga matcher i urvalet" />
+        <Empty title="Inga raster i urvalet" />
       ) : (
         <>
           <div className="chart-container">
@@ -157,8 +169,8 @@ export default function ChartCard({
                 >
                   {axes}
                   <Bar
-                    dataKey="count"
-                    name="Matcher"
+                    dataKey={activityKey}
+                    name={activityLabel}
                     fill="#bef26d"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={40}
@@ -200,7 +212,7 @@ export default function ChartCard({
                   <tr>
                     <th>Datum / periodstart</th>
                     {activity ? (
-                      <th>Matcher</th>
+                      <th>{activityLabel}</th>
                     ) : (
                       players.map((p) => (
                         <th key={p}>
@@ -216,12 +228,12 @@ export default function ChartCard({
                     <tr key={row.date}>
                       <th>{row.date}</th>
                       {activity ? (
-                        <td>{row.count}</td>
+                        <td>{row[activityKey]}</td>
                       ) : (
                         players.map((p) => (
                           <td key={p}>
                             {format(row[p])}
-                            <small>{row[`${p}_count`]} matcher</small>
+                            <small>{sample(row, p)}</small>
                           </td>
                         ))
                       )}

@@ -12,14 +12,15 @@ export const PAIRS: [PlayerId, PlayerId][] = [
 export const player = (id: string) => PLAYERS.find((p) => p.id === id)!;
 export const isPlayer = (id: unknown): id is PlayerId =>
   PLAYERS.some((p) => p.id === id);
-export interface MatchInput {
+export interface BreakInput {
   player1_id: PlayerId;
   player2_id: PlayerId;
+  /** Individual match wins during this break. No set data or match order is stored. */
   score1: number;
   score2: number;
   played_on: string;
 }
-export interface Match extends MatchInput {
+export interface BreakSession extends BreakInput {
   id: string;
   created_at: string;
   updated_at: string;
@@ -35,7 +36,7 @@ export function isDate(value: string): boolean {
     new Date(value + "T12:00:00Z").toISOString().slice(0, 10) === value
   );
 }
-export function validateMatch(m: MatchInput): string | null {
+export function validateBreak(m: BreakInput): string | null {
   if (
     !isPlayer(m.player1_id) ||
     !isPlayer(m.player2_id) ||
@@ -43,12 +44,12 @@ export function validateMatch(m: MatchInput): string | null {
   )
     return "Välj två olika spelare.";
   if (![m.score1, m.score2].every((n) => Number.isSafeInteger(n) && n >= 0))
-    return "Ange hela antal set, minst 0.";
-  if (m.score1 === 0 && m.score2 === 0) return "Ange minst ett spelat set.";
-  if (!isDate(m.played_on)) return "Ange ett giltigt matchdatum.";
+    return "Ange antal vunna matcher som heltal, minst 0.";
+  if (m.score1 === 0 && m.score2 === 0) return "Ange minst en spelad match.";
+  if (!isDate(m.played_on)) return "Ange ett giltigt rastdatum.";
   return null;
 }
-export function canonical(m: MatchInput): MatchInput {
+export function canonical(m: BreakInput): BreakInput {
   return m.player1_id < m.player2_id
     ? m
     : {
@@ -89,9 +90,9 @@ export const dateLabel = (d: string) =>
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(d + "T12:00:00Z"));
-export const within = (m: Match, r: DateRange) =>
+export const within = (m: BreakSession, r: DateRange) =>
   (!r.from || m.played_on >= r.from) && (!r.to || m.played_on <= r.to);
-export const newest = (a: Match, b: Match) =>
+export const newest = (a: BreakSession, b: BreakSession) =>
   b.played_on.localeCompare(a.played_on) || a.id.localeCompare(b.id);
 export const weekday = (d: string) =>
   (new Date(d + "T12:00:00Z").getUTCDay() + 6) % 7;

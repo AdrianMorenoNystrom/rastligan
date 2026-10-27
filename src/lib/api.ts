@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Match } from "./domain";
+import type { BreakSession } from "./domain";
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as
   string | undefined;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as
@@ -24,25 +24,21 @@ function errorMessage(code: string) {
     invalid_login: "Fel spelare eller kod.",
     rate_limited: "För många inloggningsförsök. Försök igen om 15 minuter.",
     unauthorized: "Sessionen har avslutats. Logga in igen.",
-    match_changed: "Matchen har ändrats. Hämta aktuell version.",
-    not_found: "Matchen finns inte längre. Uppdatera matchhistoriken.",
-    invalid_match: "Matchen kunde inte sparas. Kontrollera resultat och datum.",
+    match_changed: "Rasten har ändrats. Hämta aktuell version.",
+    not_found: "Rasten finns inte längre. Uppdatera rasthistoriken.",
+    invalid_match: "Rasten kunde inte sparas. Kontrollera resultat och datum.",
     server_configuration: "Ligan är inte konfigurerad.",
     origin_denied: "Åtkomst är inte tillåten från den här adressen.",
   };
   return errors[code] || "Kunde inte nå ligan. Kontrollera anslutningen.";
 }
-export async function loadMatches(): Promise<Match[]> {
+export async function loadBreaks(): Promise<BreakSession[]> {
   if (!supabase) throw new ApiError("configuration");
-  const { data, error } = await supabase.rpc("league_snapshot");
+  const { data, error } = await supabase.rpc("break_snapshot");
   if (error) throw new ApiError("network");
-  if (
-    !data ||
-    !Array.isArray(data.matches) ||
-    data.matches.length !== data.count
-  )
+  if (!data || !Array.isArray(data.breaks) || data.breaks.length !== data.count)
     throw new ApiError("incomplete_data");
-  return data.matches;
+  return data.breaks;
 }
 export async function editorRequest<T>(
   body: Record<string, unknown>,

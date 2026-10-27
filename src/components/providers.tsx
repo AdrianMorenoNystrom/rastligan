@@ -7,7 +7,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError, editorRequest, loadMatches } from "../lib/api";
+import { ApiError, editorRequest, loadBreaks } from "../lib/api";
 import type { PlayerId } from "../lib/domain";
 interface Session {
   player_id: PlayerId;
@@ -120,16 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 export const useAuth = () => useContext(AuthContext)!;
-export function useMatches() {
+export function useBreaks() {
   return useQuery({
-    queryKey: ["matches"],
-    queryFn: loadMatches,
+    queryKey: ["breaks"],
+    queryFn: loadBreaks,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
     retry: 1,
   });
 }
-export function useRefreshMatches() {
+export function useRefreshBreaks() {
   const client = useQueryClient();
-  return () => client.invalidateQueries({ queryKey: ["matches"] });
+  return () => client.invalidateQueries({ queryKey: ["breaks"] });
 }

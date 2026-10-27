@@ -1,14 +1,14 @@
-import { canonical, isDate, validateMatch } from "../src/lib/domain";
-import type { MatchInput, PlayerId } from "../src/lib/domain";
+import { canonical, isDate, validateBreak } from "../src/lib/domain";
+import type { BreakInput, PlayerId } from "../src/lib/domain";
 export interface ImportRow {
   source_row: string;
   status: "valid" | "empty" | "invalid" | "already_imported" | "source_changed";
   error?: string;
-  match?: MatchInput;
+  break?: BreakInput;
 }
 export interface ImportedRow {
   source_row: string;
-  match: MatchInput;
+  break: BreakInput;
 }
 const names: Record<string, PlayerId> = {
   adrian: "adrian",
@@ -79,6 +79,7 @@ export const DEFAULT_MAPPING: Mapping = {
   date: "Speldatum",
   player1: "Spelare 1",
   player2: "Spelare 2",
+  // Original Sheets headers are immutable source identifiers; values are match wins.
   score1: "Set 1",
   score2: "Set 2",
 };
@@ -88,7 +89,7 @@ const normalize = (v: unknown) =>
     .toLowerCase();
 const isBlank = (v: unknown) =>
   v === null || v === undefined || String(v).trim() === "";
-function setNumber(v: unknown): number {
+function matchWins(v: unknown): number {
   if (isBlank(v)) return NaN;
   return typeof v === "number"
     ? v
@@ -111,11 +112,11 @@ export function planImport(
       return [key, i];
     }),
   ) as Record<keyof Mapping, number>;
-  const previous = new Map(existing.map((r) => [r.source_row, r.match]));
+  const previous = new Map(existing.map((r) => [r.source_row, r.break]));
   return rows.slice(1).map((row, i) => {
     const source_row = `row:${i + 2}`;
     const get = (key: keyof Mapping) => row[indexes[key]];
-    // Formula-filled names alone do not make an empty registration a match.
+    // Formula-filled names alone do not make an empty registration a break.
     if (
       ["date", "score1", "score2"].every((k) =>
         isBlank(get(k as keyof Mapping)),
@@ -130,7 +131,7 @@ export function planImport(
         source_row,
         status: "invalid",
         error:
-          "Saknat eller ogiltigt matchdatum (formler kräver utvärderat datum).",
+          "Saknat eller ogiltigt rastdatum (formler kräver utvärderat datum).",
       };
     if (!p1 || !p2)
       return {
@@ -138,24 +139,24 @@ export function planImport(
         status: "invalid",
         error: "Okänt eller saknat spelarnamn.",
       };
-    const match = canonical({
+    const rast = canonical({
       player1_id: p1,
       player2_id: p2,
-      score1: setNumber(get("score1")),
-      score2: setNumber(get("score2")),
+      score1: matchWins(get("score1")),
+      score2: matchWins(get("score2")),
       played_on: date,
     });
-    const error = validateMatch(match);
+    const error = validateBreak(rast);
     if (error) return { source_row, status: "invalid", error };
     const old = previous.get(source_row);
     if (old) {
-      const equal = Object.entries(match).every(
-        ([k, v]) => old[k as keyof MatchInput] === v,
+      const equal = Object.entries(rast).every(
+        ([k, v]) => old[k as keyof BreakInput] === v,
       );
       return {
         source_row,
         status: equal ? "already_imported" : "source_changed",
-        match,
+        break: rast,
         ...(!equal
           ? {
               error:
@@ -164,6 +165,6 @@ export function planImport(
           : {}),
       };
     }
-    return { source_row, status: "valid", match };
+    return { source_row, status: "valid", break: rast };
   });
 }

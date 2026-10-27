@@ -1,12 +1,12 @@
 import { useAuth } from "../components/providers";
-import { MatchForm } from "../components/MatchForm";
+import { BreakForm } from "../components/BreakForm";
 import { Login } from "../components/Login";
 import { PageHeading } from "../components/ui";
 export default function Register() {
   const auth = useAuth();
   return (
     <div className="narrow">
-      <PageHeading title="Registrera match" />
+      <PageHeading title="Registrera rast" />
       <section className="card register-card">
         {auth.checking ? (
           <p role="status">Kontrollerar inloggningen…</p>
@@ -14,7 +14,7 @@ export default function Register() {
           !auth.session && <Login />
         )}
         <div hidden={!auth.session}>
-          <MatchForm />
+          <BreakForm />
         </div>
       </section>
       <p className="fine-print centered">

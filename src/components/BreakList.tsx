@@ -1,19 +1,19 @@
 import { Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Match } from "../lib/domain";
+import type { BreakSession } from "../lib/domain";
 import { dateLabel, player } from "../lib/domain";
 import { Empty } from "./ui";
-export function MatchList({
-  matches,
+export function BreakList({
+  breaks,
   onEdit,
 }: {
-  matches: Match[];
-  onEdit?: (m: Match) => void;
+  breaks: BreakSession[];
+  onEdit?: (m: BreakSession) => void;
 }) {
-  if (!matches.length) return <Empty title="Inga matcher i urvalet" />;
+  if (!breaks.length) return <Empty title="Inga raster i urvalet" />;
   return (
     <div className="match-list">
-      {matches.map((m) => (
+      {breaks.map((m) => (
         <article className="match-row" key={m.id}>
           <time dateTime={m.played_on}>{dateLabel(m.played_on)}</time>
           <div className="match-players">

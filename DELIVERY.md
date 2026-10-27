@@ -1,37 +1,35 @@
 # Leveransstatus
 
-Rastligan är implementerad och verifierad lokalt mot riktig Supabase PostgreSQL, PostgREST och Edge Functions. Frontend innehåller inga exempelmatcher. Alla fyra huvudvyer, profiler, dueller, rekord, datumfilter, diagram, skrivflöden och återkalleliga kodsessioner är implementerade.
+Rastligan använder raster för registrering, ligapoäng och historik. Individuella matcher räknas separat från rastens resultat. Design, navigationens struktur och kodinloggning är bevarade.
 
-## Verifierat 2026-10-27
+## Rastmodellen, 2026-10-27
 
-- TypeScript strict typecheck, ESLint och produktionsbygge.
-- 64 Vitest-fall: poäng/rankning, kalender, statistik, import från CSV/XLSX och registreringskomponenten.
-- 23 databasfall i PostgreSQL, inklusive verkliga anon-grants/RLS, återkallelse, 90-dagarsgräns, audit, idempotens och mer än 1 000 matcher.
-- 13 HTTP-fall mot verklig lokal Supabase/Edge Function: kodinloggning, nekade REST-skrivningar, felaktiga token, parallell dubbelsparning, utloggning och rate limiting.
-- 8 Playwright-fall: publika vyer och hela skapa/ändra/radera/inloggningsflödet i 375, 390, 768 och 1440 px.
-- Mobil- och desktopbilder har granskats. Alla tre tabellrader ryms utan sidscrollning. Registreringen har förenklats efter granskningen.
-- Bygget har genomsökts efter konfigurerade servernycklar och testkoder. npm audit rapporterar inga kända sårbarheter.
-- Deno typecheck av den riktiga Edge-funktionen.
+- En `BreakSession` är en rast. `score1`/`score2` är vunna individuella matcher: 4–1 ger en rast, fem matcher och tre ligapoäng till rastvinnaren.
+- Ligatabellen visar R, V, O, F, P och P/R. Ranking: totalpoäng, matchskillnad, vunna matcher och därefter delad placering.
+- Översikt, profiler, dueller och rekord skiljer rastmått från matchmått. Aktivitetsdiagrammet växlar mellan raster och matcher. Profildiagrammet har P/R, rastvinstprocent, matchvinstprocent, matchskillnad/rast och matchvinster/rast.
+- Prestationsrekord kräver fem raster per spelare och kalendermånad. Volymrekord och enskilda rastrekord har ingen sådan gräns.
+- Migration `202610270005_break_domain.sql` lägger till `break_snapshot()` och dokumenterar resultatens betydelse. Den befintliga tabellen `matches` och äldre RPC-format behålls. Inga poster, ID:n, importreferenser, auditloggar, koder eller sessioner skrivs om.
+- Sheets-källans äldre kolumnnamn Set 1/Set 2 tolkas som matchvinster. En giltig källrad ger en rast. Importens rapporter använder `break` och `total_breaks`.
 
-## Verklig källdata
+## Verifierat lokalt
 
-Originalarket lästes autentiserat och ändrades inte. Källkopian behåller radpositionerna i Data-fliken. Lokal import: **7 matcher, 0 ogiltiga ifyllda rader, 593 tomma registreringsrader**. Upprepning: **7 redan importerade, 0 nya dubbletter**. Kontrollposten Dave–Elias 2–2, 2026-10-22 verifierades. Tabellen efter import: Elias 9 poäng (5 matcher), Dave 5 (4), Adrian 4 (5). Tre matcher är oavgjorda.
+- TypeScript, ESLint, produktionsbygge och kontroll av att servernycklar/testkoder saknas i bygget.
+- 74 Vitest-fall, inklusive exemplet 4–1 och 2–3: två raster, tio matcher, 1,50 P/R, 60 % matchvinstprocent och +1,00 matchskillnad per rast.
+- 31 PostgreSQL-kontroller i en återställd transaktion, inklusive bevarande vid migrering, RLS/grants, kodsessioner, audit, idempotens, import och komplett snapshot över 1 000 raster.
+- 14 HTTP-kontroller mot lokal Supabase/Edge, inklusive nya och äldre klientformat, nekad anonym skrivning, 0–0, kodinloggning, utloggning och rate limiting.
+- 8 Playwright-fall i 375, 390, 768 och 1440 px. Registrering, ändring, borttagning, datumfilter, diagram och separat rast-/matchaktivitet kontrolleras.
+- Registrering, ligatabell, profiler och statistik har granskats visuellt. Alla tre spelare ryms i mobiltabellen. Aktivitetsstaplar börjar på noll.
+- Återimport av den fasta källfilen: sju redan importerade, noll nya eller ändrade. Den lokala ligans åtta raster är bevarade och innehåller 33 individuella matcher. Temporära E2E-raster tas bort av testerna.
 
-## Drift
+## Data och drift
 
-GitHub Actions för kvalitet, GitHub Pages och Supabase-deployment finns. Frontend använder repository-anpassad base-sökväg och HashRouter. Servernycklar, lokala miljöfiler och testkoder är gitignorerade.
+Produktionsprojekt: `hsviguboptbsivvotoxp`. Webbplats: [Rastligan](https://adrianmorenonystrom.github.io/rastligan/). Rastmigreringen och Edge-funktionen är uppgraderade. Före/efterkontrollen verifierade oförändrade åtta raster, 33 matcher och åtta importreferenser, inklusive ID:n, datum och resultat. Frontend publiceras via Quality → GitHub Pages. Uppgraderingsordning: databas, Edge Function, frontend. Kör aldrig databasreset för denna uppgradering.
 
-**Uppdatering 2026-10-27:** Supabase-produktionsprojektet är nu anslutet och har fått åtta matcher från en ny läsning av originalarket. Den lokala databasen har också åtta matcher. Produktionsimport och återimportkontroll är verifierade. Spelarkoder har inte ändrats vid denna import. Webbpublicering följer stegen i [README](README.md#produktionsdrift).
-
-Egenvalda spelarkoder kan nu ändras med `set-code`, med dold inmatning och bekräftelse i terminalen. Produktionskommandona finns i README. Den ursprungliga sjumatchersfilen används fortsatt som oföränderlig testfixture i CI.
-
-Längdkravet för spelarkoder har tagits bort i CLI, inloggningsformulär, Edge Function och databas. Alla icke-tomma koder accepteras. Migrationen och den uppdaterade funktionen är publicerade i produktions-Supabase; befintliga koder och åtta matcher är bevarade. Lokalt verifierat: ensiffriga koder, långa Unicode-koder, olika suffix efter samma 72-byteprefix och kompatibilitet med gamla kodhashar.
+Den versionshanterade sjurastersfilen `data/source-google-sheets.json` är ett fast CI-underlag. Senare import har gett åtta raster i lokal- och produktionsligan. Källrader ändras inte av importen. Koder kan väljas med `set-code`, med stjärnor under inmatningen; alla icke-tomma längder accepteras.
 
 ## Granskningsbilder
 
 - [Ligan på mobil](artifacts/screenshots/ligan-mobile-375.png)
-- [Ligan på desktop](artifacts/screenshots/ligan-desktop-1440.png)
 - [Registrera på mobil](artifacts/screenshots/registrera-mobile-375.png)
+- [Spelarprofil på mobil](artifacts/screenshots/profil-mobile-375.png)
 - [Statistik på desktop](artifacts/screenshots/statistik-desktop-1440.png)
-
-Registreringsbilder använder en tillfällig match i den isolerade testmiljön. Testmatchen har tagits bort; appens lagrade ligadata består av de sju importerade originalmatcherna.

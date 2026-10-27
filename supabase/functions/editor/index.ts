@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
     }
     if (!["create", "update", "delete"].includes(body.action))
       return reply({ error: "invalid_action" }, 400);
-    const m = body.match;
+    // New clients use break; retain the wire format for previously deployed clients.
+    const m = body.break ?? body.match;
     if (!m || typeof m !== "object")
       return reply({ error: "invalid_match" }, 400);
     if (body.action !== "delete") {

@@ -21,9 +21,12 @@ test("Supabase HTTP och Edge Functions: verklig behörighetskontroll", async (t)
   try {
     await db.query("delete from private.login_limits");
     await t.test("anonym läsning fungerar", async () => {
-      const { data, error } = await anon.rpc("league_snapshot");
+      const { data, error } = await anon.rpc("break_snapshot");
       assert.ifError(error);
-      assert.equal(data.count, data.matches.length);
+      assert.equal(data.count, data.breaks.length);
+      const legacy = await anon.rpc("league_snapshot");
+      assert.ifError(legacy.error);
+      assert.deepEqual(data.breaks, legacy.data.matches);
     });
     for (const method of ["insert", "update", "delete"])
       await t.test("anonym " + method + " via REST nekas", async () => {
@@ -82,7 +85,7 @@ test("Supabase HTTP och Edge Functions: verklig behörighetskontroll", async (t)
           await edge(
             {
               action: "create",
-              match: { ...input, score1: 0, score2: 0 },
+              break: { ...input, score1: 0, score2: 0 },
               idempotency_key: randomUUID(),
             },
             token,
@@ -92,11 +95,11 @@ test("Supabase HTTP och Edge Functions: verklig behörighetskontroll", async (t)
       ),
     );
     await t.test(
-      "parallella sparförsök med samma ID ger en enda match",
+      "nya och äldre klienter ger samma rast och idempotenskvitto",
       async () => {
         const key = randomUUID();
         const responses = await Promise.all([
-          edge({ action: "create", match: input, idempotency_key: key }, token),
+          edge({ action: "create", break: input, idempotency_key: key }, token),
           edge({ action: "create", match: input, idempotency_key: key }, token),
         ]);
         assert.ok(responses.every((r) => r.status === 200));

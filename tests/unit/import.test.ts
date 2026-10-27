@@ -19,7 +19,7 @@ describe("import", () => {
     ).toMatchObject({
       status: "valid",
       source_row: "row:2",
-      match: {
+      break: {
         played_on: "2026-10-22",
         score1: 2,
         score2: 2,
@@ -27,9 +27,9 @@ describe("import", () => {
         player2_id: "elias",
       },
     }));
-  it("bevarar koppling mellan omvänt spelarpar och set", () =>
+  it("bevarar koppling mellan omvänt spelarpar och matchvinster", () =>
     expect(
-      planImport([header, ["2026-10-22", "Elias", "Adrian", 6, 0]])[0].match,
+      planImport([header, ["2026-10-22", "Elias", "Adrian", 6, 0]])[0].break,
     ).toMatchObject({
       player1_id: "adrian",
       player2_id: "elias",
@@ -57,7 +57,7 @@ describe("import", () => {
       error: expect.any(String),
     }),
   );
-  it("två identiska matcher samma dag förblir separata", () => {
+  it("två identiska raster samma dag förblir separata", () => {
     const row = ["2026-10-22", "Adrian", "Dave", 3, 1];
     const plan = planImport([header, row, row]);
     expect(plan.map((r) => r.source_row)).toEqual(["row:2", "row:3"]);
@@ -67,7 +67,7 @@ describe("import", () => {
     const rows = [header, ["2026-10-22", "Adrian", "Dave", 3, 1]];
     const first = planImport(rows);
     const existing = [
-      { source_row: first[0].source_row, match: first[0].match! },
+      { source_row: first[0].source_row, break: first[0].break! },
     ];
     expect(planImport(rows, undefined, existing)[0].status).toBe(
       "already_imported",

@@ -34,7 +34,7 @@ it("CSV-kommandot förhandsgranskar alla rader utan databas", async () => {
     );
     const result = JSON.parse(await readFile(report, "utf8"));
     expect(result.counts).toMatchObject({ valid: 1, invalid: 1 });
-    expect(result.rows[0].match.played_on).toBe("2026-10-22");
+    expect(result.rows[0].break.played_on).toBe("2026-10-22");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -75,7 +75,7 @@ it("XLSX-kommandot använder utvärderade formelvärden och avvisar formler utan
     );
     const result = JSON.parse(await readFile(report, "utf8"));
     expect(result.counts).toMatchObject({ valid: 2, invalid: 1 });
-    expect(result.rows[0].match.played_on).toBe("2026-10-22");
+    expect(result.rows[0].break.played_on).toBe("2026-10-22");
     expect(result.rows[2].error).toContain("datum");
   } finally {
     await rm(dir, { recursive: true, force: true });

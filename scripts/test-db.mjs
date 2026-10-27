@@ -1,6 +1,7 @@
 import pg from "pg";
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { assertLocal } from "./test-helpers.mjs";
 assertLocal();
@@ -43,6 +44,54 @@ test("PostgreSQL: dataintegritet, RLS, sessioner och transaktioner", async (t) =
   };
   let created;
   try {
+    await t.test(
+      "rastmigrering bevarar resultat, ID, källreferenser, audit och behörigheter",
+      async () => {
+        const tables = [
+          "public.matches",
+          "private.match_audit_log",
+          "private.import_log",
+          "private.write_receipts",
+          "private.editor_credentials",
+          "private.editor_sessions",
+        ];
+        const snapshot = async () => {
+          const result = [];
+          for (const table of tables) {
+            result.push(
+              (
+                await query(
+                  `select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]'::jsonb) as data from ${table} t`,
+                )
+              ).rows[0].data,
+            );
+          }
+          return result;
+        };
+        const before = await snapshot();
+        await query(
+          await readFile(
+            new URL(
+              "../supabase/migrations/202610270005_break_domain.sql",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        assert.deepEqual(await snapshot(), before);
+        await query("set local role anon");
+        const legacy = await rpc("league_snapshot", []);
+        const current = await rpc("break_snapshot", []);
+        assert.deepEqual(current.breaks, legacy.matches);
+        assert.equal(current.count, legacy.count);
+        assert.deepEqual(Object.keys(current).sort(), ["breaks", "count"]);
+        await denied(
+          "insert into public.matches(player1_id,player2_id,score1,score2,played_on) values ('adrian','dave',4,1,'2026-10-27')",
+        );
+        await denied("select * from private.editor_credentials");
+        await query("reset role");
+      },
+    );
     await query("delete from private.login_limits");
     await rpc("admin_editor", ["adrian", "code", code]);
     await t.test(
@@ -385,11 +434,11 @@ test("PostgreSQL: dataintegritet, RLS, sessioner och transaktioner", async (t) =
       },
     );
     await t.test(
-      "import bevarar likadana matcher och är idempotent",
+      "import bevarar likadana raster och är idempotent",
       async () => {
         const rows = [
-          { source_row: "row:2", match: { ...input, score1: 2, score2: 2 } },
-          { source_row: "row:3", match: { ...input, score1: 2, score2: 2 } },
+          { source_row: "row:2", match: { ...input, score1: 4, score2: 1 } },
+          { source_row: "row:3", match: { ...input, score1: 4, score2: 1 } },
         ];
         const a = await rpc("import_matches", ["isolated-db-test", rows]);
         assert.deepEqual(
@@ -397,6 +446,15 @@ test("PostgreSQL: dataintegritet, RLS, sessioner och transaktioner", async (t) =
           ["imported", "imported"],
         );
         assert.notEqual(a[0].match_id, a[1].match_id);
+        const imported = (await rpc("break_snapshot", [])).breaks.filter((r) =>
+          [a[0].match_id, a[1].match_id].includes(r.id),
+        );
+        assert.equal(imported.length, 2);
+        assert.ok(imported.every((r) => r.score1 === 4 && r.score2 === 1));
+        assert.equal(
+          imported.reduce((n, r) => n + r.score1 + r.score2, 0),
+          10,
+        );
         const b = await rpc("import_matches", ["isolated-db-test", rows]);
         assert.deepEqual(
           b.map((r) => r.status),
@@ -411,8 +469,8 @@ test("PostgreSQL: dataintegritet, RLS, sessioner och transaktioner", async (t) =
           "insert into public.matches(player1_id,player2_id,score1,score2,played_on) select 'adrian','dave',1,0,date '2026-10-22' from generate_series(1,1005)",
         );
         await query("set local role anon");
-        const result = await rpc("league_snapshot", []);
-        assert.equal(result.matches.length, result.count);
+        const result = await rpc("break_snapshot", []);
+        assert.equal(result.breaks.length, result.count);
         assert.ok(result.count > 1000);
         await query("reset role");
       },

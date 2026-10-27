@@ -2,7 +2,7 @@ import { useEffect, useRef, useId } from "react";
 import type { ReactNode } from "react";
 import { X, Inbox, AlertCircle, RotateCw, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMatches } from "./providers";
+import { useBreaks } from "./providers";
 export function Modal({
   title,
   onClose,
@@ -43,7 +43,7 @@ export function Modal({
   );
 }
 export function Empty({
-  title = "Inga matcher registrerade",
+  title = "Inga raster registrerade",
   children,
 }: {
   title?: string;
@@ -95,7 +95,7 @@ export function SectionHeading({
   );
 }
 export function DataBoundary({ children }: { children: ReactNode }) {
-  const q = useMatches();
+  const q = useBreaks();
   if (q.isPending)
     return (
       <div className="loading" role="status">
@@ -119,7 +119,7 @@ export function DataBoundary({ children }: { children: ReactNode }) {
     <>
       {q.isError && (
         <p className="notice error" role="alert">
-          Kunde inte uppdatera. Tidigare hämtade matcher visas.{" "}
+          Kunde inte uppdatera. Tidigare hämtade raster visas.{" "}
           <button onClick={() => void q.refetch()}>Försök igen</button>
         </p>
       )}

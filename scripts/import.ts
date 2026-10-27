@@ -127,7 +127,12 @@ let existing: ImportedRow[] = [];
 if (!values.offline && db) {
   const { data, error } = await db.rpc("import_preview", { p_source: source });
   if (error) throw new Error(error.message);
-  existing = data;
+  existing = data.map(
+    (r: { source_row: string; match: ImportedRow["break"] }) => ({
+      source_row: r.source_row,
+      break: r.match,
+    }),
+  );
 }
 const plan = planImport(rows, mapping, existing);
 const counts = Object.fromEntries(
@@ -142,7 +147,7 @@ const report: {
   rows: typeof plan;
   applied?: unknown;
   standings?: unknown;
-  total_matches?: number;
+  total_breaks?: number;
 } = { source, offline: values.offline, counts, rows: plan };
 if (values.apply) {
   if (!db || values.offline)
@@ -155,7 +160,10 @@ if (values.apply) {
     );
   const { data, error } = await db.rpc("import_matches", {
     p_source: source,
-    p_rows: plan,
+    p_rows: plan.map(({ break: rast, ...row }) => ({
+      ...row,
+      ...(rast ? { match: rast } : {}),
+    })),
   });
   if (error) throw new Error(error.message);
   report.applied = data;
@@ -165,7 +173,7 @@ if (values.apply) {
       "Import applicerad men efterkontrollen misslyckades. Kör förhandsgranskning igen.",
     );
   report.standings = standings(snapshot.data.matches);
-  report.total_matches = snapshot.data.count;
+  report.total_breaks = snapshot.data.count;
 }
 await writeFile(values.report!, JSON.stringify(report, null, 2) + "\n");
 console.log(
@@ -176,7 +184,7 @@ console.log(
       counts,
       applied: values.apply,
       report: values.report,
-      total_matches: report.total_matches,
+      total_breaks: report.total_breaks,
       standings: report.standings,
     },
     null,

@@ -7,49 +7,51 @@ import {
   weekday,
   WEEKDAYS,
 } from "./domain";
-import type { Match, PlayerId, DateRange } from "./domain";
+import type { BreakSession, PlayerId, DateRange } from "./domain";
 export interface Standing {
   id: PlayerId;
   name: string;
   rank: number;
-  matches: number;
+  breaks: number;
   wins: number;
   draws: number;
   losses: number;
   points: number;
-  setsWon: number;
-  setsLost: number;
-  setDifference: number;
-  ppm: number | null;
-  winPercent: number | null;
-  drawPercent: number | null;
-  lossPercent: number | null;
-  setDifferencePerMatch: number | null;
-  setsWonPerMatch: number | null;
-  setsLostPerMatch: number | null;
-  setsPerMatch: number | null;
+  matchesWon: number;
+  matchesLost: number;
+  matchesPlayed: number;
+  matchWinPercent: number | null;
+  matchDifference: number;
+  ppr: number | null;
+  breakWinPercent: number | null;
+  breakDrawPercent: number | null;
+  breakLossPercent: number | null;
+  matchDifferencePerBreak: number | null;
+  matchesWonPerBreak: number | null;
+  matchesLostPerBreak: number | null;
+  matchesPerBreak: number | null;
   winMargin: number | null;
   lossMargin: number | null;
   margin: number | null;
   closePercent: number | null;
 }
-export function standings(matches: Match[]): Standing[] {
+export function standings(breaks: BreakSession[]): Standing[] {
   const rows = PLAYERS.map((p) => {
     let wins = 0,
       draws = 0,
       losses = 0,
-      setsWon = 0,
-      setsLost = 0,
+      matchesWon = 0,
+      matchesLost = 0,
       winMargins = 0,
       lossMargins = 0,
       close = 0,
       margins = 0;
-    for (const m of matches) {
+    for (const m of breaks) {
       if (m.player1_id !== p.id && m.player2_id !== p.id) continue;
       const [a, b] =
         m.player1_id === p.id ? [m.score1, m.score2] : [m.score2, m.score1];
-      setsWon += a;
-      setsLost += b;
+      matchesWon += a;
+      matchesLost += b;
       margins += Math.abs(a - b);
       if (a > b) {
         wins++;
@@ -66,22 +68,24 @@ export function standings(matches: Match[]): Standing[] {
     return {
       ...p,
       rank: 1,
-      matches: count,
+      breaks: count,
       wins,
       draws,
       losses,
       points: total,
-      setsWon,
-      setsLost,
-      setDifference: setsWon - setsLost,
-      ppm: ratio(total, count),
-      winPercent: ratio(wins * 100, count),
-      drawPercent: ratio(draws * 100, count),
-      lossPercent: ratio(losses * 100, count),
-      setDifferencePerMatch: ratio(setsWon - setsLost, count),
-      setsWonPerMatch: ratio(setsWon, count),
-      setsLostPerMatch: ratio(setsLost, count),
-      setsPerMatch: ratio(setsWon + setsLost, count),
+      matchesWon,
+      matchesLost,
+      matchesPlayed: matchesWon + matchesLost,
+      matchWinPercent: ratio(matchesWon * 100, matchesWon + matchesLost),
+      matchDifference: matchesWon - matchesLost,
+      ppr: ratio(total, count),
+      breakWinPercent: ratio(wins * 100, count),
+      breakDrawPercent: ratio(draws * 100, count),
+      breakLossPercent: ratio(losses * 100, count),
+      matchDifferencePerBreak: ratio(matchesWon - matchesLost, count),
+      matchesWonPerBreak: ratio(matchesWon, count),
+      matchesLostPerBreak: ratio(matchesLost, count),
+      matchesPerBreak: ratio(matchesWon + matchesLost, count),
       winMargin: ratio(winMargins, wins),
       lossMargin: ratio(lossMargins, losses),
       margin: ratio(margins, count),
@@ -91,22 +95,28 @@ export function standings(matches: Match[]): Standing[] {
   rows.sort(
     (a, b) =>
       b.points - a.points ||
-      b.setDifference - a.setDifference ||
-      b.setsWon - a.setsWon ||
+      b.matchDifference - a.matchDifference ||
+      b.matchesWon - a.matchesWon ||
       a.id.localeCompare(b.id),
   );
   rows.forEach((row, i) => {
     row.rank =
       i &&
       row.points === rows[i - 1].points &&
-      row.setDifference === rows[i - 1].setDifference &&
-      row.setsWon === rows[i - 1].setsWon
+      row.matchDifference === rows[i - 1].matchDifference &&
+      row.matchesWon === rows[i - 1].matchesWon
         ? rows[i - 1].rank
         : i + 1;
   });
   return rows;
 }
 export type Resolution = "day" | "week" | "month";
+export type PerformanceMetric =
+  | "ppr"
+  | "breakWinPercent"
+  | "matchWinPercent"
+  | "matchDifferencePerBreak"
+  | "matchesWonPerBreak";
 export function period(d: string, resolution: Resolution): string {
   return resolution === "month"
     ? d.slice(0, 7) + "-01"
@@ -120,46 +130,57 @@ function nextPeriod(d: string, resolution: Resolution): string {
   date.setUTCMonth(date.getUTCMonth() + 1);
   return date.toISOString().slice(0, 10);
 }
-export function resolutionFor(matches: Match[], range: DateRange): Resolution {
-  const dates = matches.map((m) => m.played_on).sort();
+export function resolutionFor(
+  breaks: BreakSession[],
+  range: DateRange,
+): Resolution {
+  const dates = breaks.map((m) => m.played_on).sort();
   const from = range.from || dates[0],
     to = range.to || dates.at(-1);
   if (!from || !to) return "week";
   const days = (Date.parse(to) - Date.parse(from)) / 86400000;
-  return days <= 31 ? "day" : days <= 180 ? "week" : "month";
+  return days <= 180 ? "week" : "month";
 }
 export interface ChartRow {
   date: string;
   count: number;
+  matchesPlayed: number;
   adrian: number | null;
   dave: number | null;
   elias: number | null;
   adrian_count: number;
   dave_count: number;
   elias_count: number;
+  adrian_matches: number;
+  dave_matches: number;
+  elias_matches: number;
 }
 const blank = (date: string): ChartRow => ({
   date,
   count: 0,
+  matchesPlayed: 0,
   adrian: null,
   dave: null,
   elias: null,
   adrian_count: 0,
   dave_count: 0,
   elias_count: 0,
+  adrian_matches: 0,
+  dave_matches: 0,
+  elias_matches: 0,
 });
 export function performance(
-  matches: Match[],
+  breaks: BreakSession[],
   range: DateRange,
   resolution: Resolution,
-  metric: "ppm" | "winPercent" = "ppm",
+  metric: PerformanceMetric = "ppr",
 ): ChartRow[] {
-  const selected = matches.filter((m) => within(m, range));
+  const selected = breaks.filter((m) => within(m, range));
   if (!selected.length) return [];
   const dates = selected.map((m) => m.played_on).sort();
   const from = period(range.from || dates[0], resolution),
     to = period(range.to || dates.at(-1)!, resolution);
-  const groups = new Map<string, Match[]>();
+  const groups = new Map<string, BreakSession[]>();
   selected.forEach((m) => {
     const key = period(m.played_on, resolution);
     groups.set(key, [...(groups.get(key) || []), m]);
@@ -169,20 +190,30 @@ export function performance(
     const group = groups.get(d) || [],
       row = blank(d);
     row.count = group.length;
+    row.matchesPlayed = group.reduce((n, m) => n + m.score1 + m.score2, 0);
     standings(group).forEach((s) => {
       row[s.id] = s[metric];
-      row[`${s.id}_count`] = s.matches;
+      row[`${s.id}_count`] = s.breaks;
+      row[`${s.id}_matches`] = s.matchesPlayed;
     });
     result.push(row);
   }
   return result;
 }
-export function cumulative(matches: Match[], range: DateRange): ChartRow[] {
-  if (!matches.length) return [];
+export function cumulative(
+  breaks: BreakSession[],
+  range: DateRange,
+): ChartRow[] {
+  if (!breaks.length) return [];
   const totals: Record<PlayerId, number> = { adrian: 0, dave: 0, elias: 0 };
   const counts: Record<PlayerId, number> = { adrian: 0, dave: 0, elias: 0 };
-  const groups = new Map<string, Match[]>();
-  for (const m of matches) {
+  const matchCounts: Record<PlayerId, number> = {
+    adrian: 0,
+    dave: 0,
+    elias: 0,
+  };
+  const groups = new Map<string, BreakSession[]>();
+  for (const m of breaks) {
     if (!range.to || m.played_on <= range.to)
       groups.set(m.played_on, [...(groups.get(m.played_on) || []), m]);
   }
@@ -191,10 +222,17 @@ export function cumulative(matches: Match[], range: DateRange): ChartRow[] {
     result.push({
       date: d,
       count: n,
+      matchesPlayed: (groups.get(d) || []).reduce(
+        (n, m) => n + m.score1 + m.score2,
+        0,
+      ),
       ...totals,
       adrian_count: counts.adrian,
       dave_count: counts.dave,
       elias_count: counts.elias,
+      adrian_matches: matchCounts.adrian,
+      dave_matches: matchCounts.dave,
+      elias_matches: matchCounts.elias,
     });
   const dates = [...groups.keys()].sort();
   const lastBefore = range.from
@@ -206,29 +244,32 @@ export function cumulative(matches: Match[], range: DateRange): ChartRow[] {
       totals[m.player2_id] += points(m.score2, m.score1);
       counts[m.player1_id]++;
       counts[m.player2_id]++;
+      matchCounts[m.player1_id] += m.score1 + m.score2;
+      matchCounts[m.player2_id] += m.score1 + m.score2;
     }
     if (!range.from || date >= range.from) push(date, groups.get(date)!.length);
     else if (date === lastBefore) push(dayAdd(range.from!, -1), 0);
   }
   return result;
 }
-export function summary(matches: Match[]) {
+export function summary(breaks: BreakSession[]) {
   return {
-    matches: matches.length,
-    drawPercent: ratio(
-      matches.filter((m) => m.score1 === m.score2).length * 100,
-      matches.length,
+    breaks: breaks.length,
+    matchesPlayed: breaks.reduce((n, m) => n + m.score1 + m.score2, 0),
+    breakDrawPercent: ratio(
+      breaks.filter((m) => m.score1 === m.score2).length * 100,
+      breaks.length,
     ),
-    setsPerMatch: ratio(
-      matches.reduce((n, m) => n + m.score1 + m.score2, 0),
-      matches.length,
+    matchesPerBreak: ratio(
+      breaks.reduce((n, m) => n + m.score1 + m.score2, 0),
+      breaks.length,
     ),
-    days: new Set(matches.map((m) => m.played_on)).size,
+    days: new Set(breaks.map((m) => m.played_on)).size,
   };
 }
-export function resultPatterns(matches: Match[], id?: PlayerId) {
+export function resultPatterns(breaks: BreakSession[], id?: PlayerId) {
   const counts = new Map<string, number>();
-  for (const m of matches) {
+  for (const m of breaks) {
     if (id && m.player1_id !== id && m.player2_id !== id) continue;
     const [a, b] = id
       ? m.player1_id === id
@@ -242,21 +283,21 @@ export function resultPatterns(matches: Match[], id?: PlayerId) {
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
-export function weekdayPerformance(matches: Match[], id: PlayerId) {
+export function weekdayPerformance(breaks: BreakSession[], id: PlayerId) {
   return WEEKDAYS.map((label, i) => ({
     label,
-    ...standings(matches.filter((m) => weekday(m.played_on) === i)).find(
+    ...standings(breaks.filter((m) => weekday(m.played_on) === i)).find(
       (s) => s.id === id,
     )!,
   }));
 }
 export function compareThirtyDays(
-  matches: Match[],
+  breaks: BreakSession[],
   id: PlayerId,
   end: string,
   range: DateRange = {},
 ) {
-  const filtered = matches.filter((m) => within(m, range));
+  const filtered = breaks.filter((m) => within(m, range));
   const current = standings(
     filtered.filter((m) => within(m, { from: dayAdd(end, -29), to: end })),
   ).find((s) => s.id === id)!;
@@ -269,9 +310,9 @@ export function compareThirtyDays(
     current,
     previous,
     delta:
-      current.ppm === null || previous.ppm === null
+      current.ppr === null || previous.ppr === null
         ? null
-        : current.ppm - previous.ppm,
+        : current.ppr - previous.ppr,
   };
 }
 export interface RecordEntry {
@@ -279,7 +320,7 @@ export interface RecordEntry {
   value: number;
   detail: string;
   count?: number;
-  matchId?: string;
+  breakId?: string;
 }
 export interface RecordGroup {
   title: string;
@@ -287,10 +328,10 @@ export interface RecordGroup {
   performance?: boolean;
   entries: RecordEntry[];
 }
-export function records(matches: Match[]): RecordGroup[] {
+export function records(breaks: BreakSession[]): RecordGroup[] {
   const activity = (resolution: Resolution): RecordEntry[] => {
     const groups = new Map<string, number>();
-    matches.forEach((m) => {
+    breaks.forEach((m) => {
       const k = period(m.played_on, resolution);
       groups.set(k, (groups.get(k) || 0) + 1);
     });
@@ -302,22 +343,20 @@ export function records(matches: Match[]): RecordGroup[] {
       }))
       .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
   };
-  const monthly = [...new Set(matches.map((m) => m.played_on.slice(0, 7)))]
+  const monthly = [...new Set(breaks.map((m) => m.played_on.slice(0, 7)))]
     .sort()
     .flatMap((month) =>
-      standings(matches.filter((m) => m.played_on.startsWith(month)))
-        .filter((s) => s.matches >= 5)
+      standings(breaks.filter((m) => m.played_on.startsWith(month)))
+        .filter((s) => s.breaks >= 5)
         .map((s) => ({ ...s, month })),
     );
-  const perf = (
-    key: "ppm" | "winPercent" | "setDifferencePerMatch",
-  ): RecordEntry[] =>
+  const perf = (key: PerformanceMetric): RecordEntry[] =>
     monthly
       .map((s) => ({
         label: s.name,
         value: s[key]!,
         detail: s.month,
-        count: s.matches,
+        count: s.breaks,
       }))
       .sort((a, b) => b.value - a.value || a.detail.localeCompare(b.detail));
   const improvement: RecordEntry[] = [];
@@ -327,96 +366,129 @@ export function records(matches: Match[]): RecordGroup[] {
     const prev = monthly.find(
       (p) => p.id === s.id && p.month === prevDate.toISOString().slice(0, 7),
     );
-    if (prev && s.ppm! > prev.ppm!)
+    if (prev && s.ppr! > prev.ppr!)
       improvement.push({
         label: s.name,
-        value: s.ppm! - prev.ppm!,
+        value: s.ppr! - prev.ppr!,
         detail: `${prev.month} → ${s.month}`,
-        count: Math.min(prev.matches, s.matches),
+        count: Math.min(prev.breaks, s.breaks),
       });
   });
   return [
     {
-      title: "Största setsegrar",
-      unit: "sets marginal",
-      entries: matches
+      title: "Flest vunna raster",
+      unit: "raster",
+      entries: standings(breaks)
+        .filter((s) => s.wins > 0)
+        .map((s) => ({ label: s.name, value: s.wins, detail: "" }))
+        .sort((a, b) => b.value - a.value),
+    },
+    {
+      title: "Flest matchvinster under en rast",
+      unit: "matcher",
+      entries: breaks
+        .map((m) => ({
+          label:
+            m.score1 === m.score2
+              ? `${PLAYERS.find((p) => p.id === m.player1_id)!.name} och ${PLAYERS.find((p) => p.id === m.player2_id)!.name}`
+              : PLAYERS.find(
+                  (p) =>
+                    p.id ===
+                    (m.score1 > m.score2 ? m.player1_id : m.player2_id),
+                )!.name,
+          value: Math.max(m.score1, m.score2),
+          detail: `${m.played_on} · ${m.score1}–${m.score2} · ${m.player1_id}–${m.player2_id}`,
+          breakId: m.id,
+        }))
+        .sort((a, b) => b.value - a.value || a.detail.localeCompare(b.detail)),
+    },
+    {
+      title: "Största matchskillnad under en rast",
+      unit: "matchers marginal",
+      entries: breaks
         .filter((m) => m.score1 !== m.score2)
         .map((m) => ({
           label: `${PLAYERS.find((p) => p.id === (m.score1 > m.score2 ? m.player1_id : m.player2_id))!.name}`,
           value: Math.abs(m.score1 - m.score2),
           detail: `${m.played_on} · ${m.score1}–${m.score2} · ${m.player1_id}–${m.player2_id}`,
-          matchId: m.id,
+          breakId: m.id,
         }))
         .sort((a, b) => b.value - a.value || a.detail.localeCompare(b.detail)),
     },
     {
-      title: "Flest set i en match",
-      unit: "set",
-      entries: matches
+      title: "Flest matcher under en rast",
+      unit: "matcher",
+      entries: breaks
         .map((m) => ({
           label: `${m.player1_id}–${m.player2_id}`,
           value: m.score1 + m.score2,
           detail: `${m.played_on} · ${m.score1}–${m.score2}`,
-          matchId: m.id,
+          breakId: m.id,
         }))
         .sort((a, b) => b.value - a.value || a.detail.localeCompare(b.detail)),
     },
     {
       title: "Vanligaste slutresultat",
-      unit: "matcher",
-      entries: resultPatterns(matches).map((r) => ({
+      unit: "raster",
+      entries: resultPatterns(breaks).map((r) => ({
         label: r.label,
         value: r.count,
-        detail: "Högsta setantalet först",
+        detail: "Flest matchvinster först",
       })),
     },
     {
-      title: "Flest matcher per dag",
-      unit: "matcher",
+      title: "Flest raster per dag",
+      unit: "raster",
       entries: activity("day"),
     },
     {
-      title: "Flest matcher per vecka",
-      unit: "matcher",
+      title: "Flest raster per vecka",
+      unit: "raster",
       entries: activity("week"),
     },
     {
-      title: "Flest matcher per månad",
-      unit: "matcher",
+      title: "Flest raster per månad",
+      unit: "raster",
       entries: activity("month"),
     },
     {
       title: "Mest aktiva veckodagar",
-      unit: "matcher",
+      unit: "raster",
       entries: WEEKDAYS.map((label, i) => ({
         label,
-        value: matches.filter((m) => weekday(m.played_on) === i).length,
+        value: breaks.filter((m) => weekday(m.played_on) === i).length,
         detail: "",
       }))
         .filter((r) => r.value > 0)
         .sort((a, b) => b.value - a.value),
     },
     {
-      title: "Högst P/M per månad",
-      unit: "P/M",
+      title: "Högst P/R per månad",
+      unit: "P/R",
       performance: true,
-      entries: perf("ppm"),
+      entries: perf("ppr"),
     },
     {
-      title: "Högst vinstprocent per månad",
+      title: "Högst rastvinstprocent per månad",
       unit: "%",
       performance: true,
-      entries: perf("winPercent"),
+      entries: perf("breakWinPercent"),
     },
     {
-      title: "Bäst setskillnad/match per månad",
-      unit: "set/match",
+      title: "Högst matchvinstprocent per månad",
+      unit: "%",
       performance: true,
-      entries: perf("setDifferencePerMatch"),
+      entries: perf("matchWinPercent"),
+    },
+    {
+      title: "Bäst matchskillnad per rast och månad",
+      unit: "matcher/rast",
+      performance: true,
+      entries: perf("matchDifferencePerBreak"),
     },
     {
       title: "Störst förbättring mellan månader",
-      unit: "P/M i ökning",
+      unit: "P/R i ökning",
       performance: true,
       entries: improvement.sort((a, b) => b.value - a.value),
     },

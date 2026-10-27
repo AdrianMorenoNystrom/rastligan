@@ -17,7 +17,7 @@ import {
   Circle,
   AlertCircle,
 } from "lucide-react";
-import { useAuth, useMatches } from "./components/providers";
+import { useAuth, useBreaks } from "./components/providers";
 import { DataBoundary, Modal } from "./components/ui";
 import { Login } from "./components/Login";
 import { player } from "./lib/domain";
@@ -27,14 +27,14 @@ const Register = lazy(() => import("./pages/Register"));
 const Statistics = lazy(() => import("./pages/Statistics"));
 const links = [
   { to: "/", label: "Ligan", icon: Trophy },
-  { to: "/matcher", label: "Matcher", icon: List },
+  { to: "/raster", label: "Raster", icon: List },
   { to: "/registrera", label: "Registrera", icon: CirclePlus },
   { to: "/statistik", label: "Statistik", icon: ChartNoAxesCombined },
 ];
 function Shell() {
   const [login, setLogin] = useState(false);
   const auth = useAuth();
-  const query = useMatches();
+  const query = useBreaks();
   return (
     <>
       <a
@@ -111,12 +111,16 @@ function Shell() {
               }
             />
             <Route
-              path="/matcher"
+              path="/raster"
               element={
                 <DataBoundary>
                   <History />
                 </DataBoundary>
               }
+            />
+            <Route
+              path="/matcher"
+              element={<Navigate to="/raster" replace />}
             />
             <Route path="/registrera" element={<Register />} />
             <Route
