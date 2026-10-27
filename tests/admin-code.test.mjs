@@ -7,13 +7,16 @@ import {
   validateEditorCode,
 } from "../scripts/admin-code.mjs";
 
-test("egen kod följer databasens minimilängd och bcrypts bytegräns", () => {
-  assert.throws(() => validateEditorCode("kort"));
-  assert.doesNotThrow(() => validateEditorCode("a".repeat(16)));
-  assert.doesNotThrow(() => validateEditorCode("a".repeat(72)));
-  assert.throws(() => validateEditorCode("a".repeat(73)));
-  assert.doesNotThrow(() => validateEditorCode("å".repeat(36)));
-  assert.throws(() => validateEditorCode("å".repeat(37)));
+test("egen kod kan ha valfri längd, inklusive en enda siffra", () => {
+  assert.doesNotThrow(() => validateEditorCode("7"));
+  assert.doesNotThrow(() => validateEditorCode("1234"));
+  assert.doesNotThrow(() => validateEditorCode("å🎾".repeat(10000)));
+  assert.doesNotThrow(() => validateEditorCode("a".repeat(100000)));
+});
+
+test("tom eller saknad kod nekas", () => {
+  for (const code of ["", null, undefined])
+    assert.throws(() => validateEditorCode(code), /Ange en kod/);
 });
 
 test("egen kod måste bekräftas innan den returneras för sparande", async () => {

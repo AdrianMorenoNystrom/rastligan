@@ -60,6 +60,11 @@ test("Supabase HTTP och Edge Functions: verklig behörighetskontroll", async (t)
       assert.match(token, /^[a-f0-9]{64}$/);
       assert.equal(data.player_id, "adrian");
     });
+    await t.test("begäran större än 8 KiB når sessionskontrollen", async () => {
+      const r = await edge({ action: "session", padding: "x".repeat(20000) });
+      assert.equal(r.status, 401);
+      assert.deepEqual(await r.json(), { error: "unauthorized" });
+    });
     await t.test("förfalskad token ger 401", async () =>
       assert.equal(
         (

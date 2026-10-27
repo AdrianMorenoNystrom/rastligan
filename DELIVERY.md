@@ -25,6 +25,8 @@ GitHub Actions för kvalitet, GitHub Pages och Supabase-deployment finns. Fronte
 
 Egenvalda spelarkoder kan nu ändras med `set-code`, med dold inmatning och bekräftelse i terminalen. Produktionskommandona finns i README. Den ursprungliga sjumatchersfilen används fortsatt som oföränderlig testfixture i CI.
 
+Längdkravet för spelarkoder har tagits bort i CLI, inloggningsformulär, Edge Function och databas. Alla icke-tomma koder accepteras. Migrationen och den uppdaterade funktionen är publicerade i produktions-Supabase; befintliga koder och åtta matcher är bevarade. Lokalt verifierat: ensiffriga koder, långa Unicode-koder, olika suffix efter samma 72-byteprefix och kompatibilitet med gamla kodhashar.
+
 ## Granskningsbilder
 
 - [Ligan på mobil](artifacts/screenshots/ligan-mobile-375.png)

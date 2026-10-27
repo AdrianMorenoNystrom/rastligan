@@ -45,34 +45,12 @@ Deno.serve(async (req) => {
   if (!pepper || pepper.length < 32 || !origins.length)
     return reply({ error: "server_configuration" }, 503);
   try {
-    // Bound streamed bodies too, not only the caller-controlled Content-Length.
-    const reader = req.body?.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    if (reader)
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        size += value.length;
-        if (size > 8192) {
-          await reader.cancel();
-          return reply({ error: "request_too_large" }, 413);
-        }
-        chunks.push(value);
-      }
-    const bytes = new Uint8Array(size);
-    let offset = 0;
-    chunks.forEach((c) => {
-      bytes.set(c, offset);
-      offset += c.length;
-    });
-    const body = JSON.parse(new TextDecoder().decode(bytes));
+    const body = await req.json();
     if (body.action === "login") {
       if (
         !["adrian", "dave", "elias"].includes(body.player_id) ||
         typeof body.code !== "string" ||
-        !body.code.length ||
-        body.code.length > 72
+        !body.code.length
       )
         return reply({ error: "invalid_login" }, 401);
       const token = randomToken();

@@ -79,12 +79,11 @@ export function Login({ onDone }: { onDone?: () => void }) {
         type="password"
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        maxLength={72}
         required
         disabled={busy}
       />
       <ErrorText>{error}</ErrorText>
-      <button className="button primary full" disabled={busy || !code.trim()}>
+      <button className="button primary full" disabled={busy || !code.length}>
         {busy ? "Loggar in…" : "Logga in"}
         <ArrowRight size={19} />
       </button>

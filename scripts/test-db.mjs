@@ -64,6 +64,127 @@ test("PostgreSQL: dataintegritet, RLS, sessioner och transaktioner", async (t) =
       );
       await query("reset role");
     });
+    for (const [label, chosen] of [
+      ["en enda siffra", "7"],
+      ["fyra siffror", "1234"],
+      ["fler än 72 tecken", "a".repeat(100)],
+      ["en lång Unicode-kod", "å🎾".repeat(10000)],
+    ])
+      await t.test(`kod kan vara ${label}`, async () => {
+        await query("delete from private.login_limits");
+        await rpc("admin_editor", ["elias", "code", chosen]);
+        assert.equal(
+          (
+            await rpc("editor_login", [
+              "elias",
+              chosen,
+              ip,
+              randomBytes(32).toString("hex"),
+            ])
+          ).player_id,
+          "elias",
+        );
+        assert.equal(
+          (
+            await rpc("editor_login", [
+              "elias",
+              chosen + "x",
+              ip,
+              randomBytes(32).toString("hex"),
+            ])
+          ).error,
+          "invalid_login",
+        );
+      });
+    await t.test("långa koder med samma första 72 byte är olika", async () => {
+      await query("delete from private.login_limits");
+      const prefix = "a".repeat(72);
+      await rpc("admin_editor", ["elias", "code", prefix + "x"]);
+      assert.equal(
+        (
+          await rpc("editor_login", [
+            "elias",
+            prefix + "y",
+            ip,
+            randomBytes(32).toString("hex"),
+          ])
+        ).error,
+        "invalid_login",
+      );
+      assert.equal(
+        (
+          await rpc("editor_login", [
+            "elias",
+            prefix,
+            ip,
+            randomBytes(32).toString("hex"),
+          ])
+        ).error,
+        "invalid_login",
+      );
+      assert.equal(
+        (
+          await rpc("editor_login", [
+            "elias",
+            prefix + "x",
+            ip,
+            randomBytes(32).toString("hex"),
+          ])
+        ).player_id,
+        "elias",
+      );
+    });
+    await t.test(
+      "gamla bcrypt-koder fortsätter fungera utan att längre inmatning kapas",
+      async () => {
+        await query("delete from private.login_limits");
+        const legacy = "z".repeat(72);
+        await query(
+          "update private.editor_credentials set code_hash=extensions.crypt($1,extensions.gen_salt('bf',12)),hash_version=1 where player_id='elias'",
+          [legacy],
+        );
+        assert.equal(
+          (
+            await rpc("editor_login", [
+              "elias",
+              legacy,
+              ip,
+              randomBytes(32).toString("hex"),
+            ])
+          ).player_id,
+          "elias",
+        );
+        assert.equal(
+          (
+            await rpc("editor_login", [
+              "elias",
+              legacy + "extra",
+              ip,
+              randomBytes(32).toString("hex"),
+            ])
+          ).error,
+          "invalid_login",
+        );
+      },
+    );
+    await t.test("tom kod nekas även på servern", async () => {
+      await denied("select public.admin_editor($1,$2,$3)", [
+        "elias",
+        "code",
+        "",
+      ]);
+      assert.equal(
+        (
+          await rpc("editor_login", [
+            "elias",
+            "",
+            ip,
+            randomBytes(32).toString("hex"),
+          ])
+        ).error,
+        "invalid_login",
+      );
+    });
     for (const [name, sql] of [
       [
         "INSERT",

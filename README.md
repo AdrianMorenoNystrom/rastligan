@@ -43,7 +43,7 @@ npm run admin -- enable elias
 
 Bootstrap skapar tre kryptografiskt slumpade koder i en transaktion och vägrar köras om credentials redan finns. `code` genererar en ny kod och återkallar spelarens sessioner. Koder skrivs bara i terminalen: förvara dem i lösenordshanterare och dela privat med respektive spelare. De ska aldrig läggas i Git eller frontendmiljön.
 
-`set-code` låter dig välja kod själv: skriv den dolt två gånger i en interaktiv terminal. Koden ska ha minst 16 tecken och högst 72 byte (72 vanliga ASCII-tecken). Kommandot visar vilken databas och spelare det gäller men skriver aldrig ut din kod. Kodbyte återkallar spelarens befintliga sessioner. Ange inte koden som ett kommandoradsargument.
+`set-code` låter dig välja kod själv: skriv den dolt två gånger i en interaktiv terminal. Alla icke-tomma koder fungerar, utan minimi- eller maxlängd i appen. Kommandot visar vilken databas och spelare det gäller men skriver aldrig ut din kod. Kodbyte återkallar spelarens befintliga sessioner. Ange inte koden som ett kommandoradsargument.
 
 För ditt produktionsprojekt, använd den separata, gitignorerade `.env.production.local` med produktions-URL och service-role-nyckel:
 
@@ -55,7 +55,7 @@ node --env-file=.env.production.local scripts/admin.mjs set-code elias
 
 `npm run admin` använder fortfarande den lokala testdatabasen i `.env.local`. Ovanstående produktionskommandon väljer produktionsfilen uttryckligen.
 
-Koder lagras i ett privat schema som individuellt saltade bcrypt-hashar med kostnad 12. Servern tillåter högst fem inloggningsförsök per identitet och 30 per hashad nätverksadress under 15 minuter, även över flera funktionsinstanser. Identitetsgränsen fungerar även när proxyn delar eller maskerar klientadresser. `RATE_LIMIT_PEPPER` måste vara minst 32 tecken och sättas endast på servern.
+Koder lagras i ett privat schema som individuellt saltade bcrypt-hashar med kostnad 12. Nya koder går först genom HMAC-SHA256 med bcrypt-saltet som nyckel, så att hela koden räknas även när den är längre än bcrypts inbyggda bytegräns. Äldre kodhashar fortsätter fungera utan att någon behöver byta kod. Servern tillåter högst fem inloggningsförsök per identitet och 30 per hashad nätverksadress under 15 minuter, även över flera funktionsinstanser. Identitetsgränsen fungerar även när proxyn delar eller maskerar klientadresser. `RATE_LIMIT_PEPPER` måste vara minst 32 tecken och sättas endast på servern.
 
 Sessionstoken har 256 bitars slump och endast SHA-256-hashen lagras i databasen. Sessioner gäller 30 dagar och förnyas till 30 dagar vid aktiv serverkontroll, som sker vid återbesök, fönsterfokus och var femte aktiv minut. Absolut maxlivslängd är 90 dagar; därefter krävs kod igen. Varje skrivning låser och verifierar både session och aktiverad identitet. Utloggning och återkallelse gäller därför omedelbart även för redan öppna flikar.
 

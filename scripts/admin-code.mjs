@@ -2,8 +2,8 @@ import { createInterface } from "node:readline";
 import { Writable } from "node:stream";
 
 export function validateEditorCode(code) {
-  if (Array.from(code).length < 16 || Buffer.byteLength(code, "utf8") > 72) {
-    throw new Error("Koden måste ha minst 16 tecken och högst 72 byte.");
+  if (typeof code !== "string" || code.length === 0) {
+    throw new Error("Ange en kod.");
   }
 }
 
