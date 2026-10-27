@@ -17,7 +17,7 @@ import type { ChartRow } from "../lib/statistics";
 import { Empty } from "./ui";
 interface Props {
   title: string;
-  description: string;
+  description?: string;
   data: ChartRow[];
   activity?: boolean;
   unit?: string;
@@ -120,7 +120,7 @@ export default function ChartCard({
       <div className="chart-heading">
         <div>
           <h2 id={id}>{title}</h2>
-          <p>{description}</p>
+          {description && <p>{description}</p>}
         </div>
         <span className="chart-unit">{activity ? "Matcher" : unit}</span>
       </div>
@@ -144,9 +144,7 @@ export default function ChartCard({
         </div>
       )}
       {!data.length ? (
-        <Empty title="Inget diagramunderlag">
-          Det finns inga matcher för det här urvalet.
-        </Empty>
+        <Empty title="Inga matcher i urvalet" />
       ) : (
         <>
           <div className="chart-container">
@@ -195,7 +193,7 @@ export default function ChartCard({
             </ResponsiveContainer>
           </div>
           <details className="chart-data">
-            <summary>Visa diagramdata som tabell</summary>
+            <summary>Visa som tabell</summary>
             <div className="table-scroll">
               <table>
                 <thead>

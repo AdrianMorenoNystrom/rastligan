@@ -43,7 +43,7 @@ export function Modal({
   );
 }
 export function Empty({
-  title = "Inga matcher ännu",
+  title = "Inga matcher registrerade",
   children,
 }: {
   title?: string;
@@ -53,26 +53,20 @@ export function Empty({
     <div className="empty">
       <Inbox size={28} strokeWidth={1.4} />
       <h3>{title}</h3>
-      <p>
-        {children ||
-          "Statistiken fylls på när den första matchen har registrerats."}
-      </p>
+      {children && <p>{children}</p>}
     </div>
   );
 }
 export function PageHeading({
-  eyebrow,
   title,
   children,
 }: {
-  eyebrow: string;
   title: string;
   children?: ReactNode;
 }) {
   return (
     <div className="page-heading">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
       </div>
       {children}
@@ -125,7 +119,7 @@ export function DataBoundary({ children }: { children: ReactNode }) {
     <>
       {q.isError && (
         <p className="notice error" role="alert">
-          Uppdateringen misslyckades. Senast hämtade matchdata visas.{" "}
+          Kunde inte uppdatera. Tidigare hämtade matcher visas.{" "}
           <button onClick={() => void q.refetch()}>Försök igen</button>
         </p>
       )}

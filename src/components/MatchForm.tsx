@@ -93,17 +93,15 @@ export function MatchForm({
       {saved && !match && (
         <p role="status" className="notice success">
           <Check size={18} />
-          Matchen har sparats. Redo för nästa?
+          Match sparad
         </p>
       )}
       {!auth.session && (
-        <p className="notice error">
-          Logga in igen för att spara. Dina uppgifter finns kvar.
-        </p>
+        <p className="notice error">Logga in igen för att spara.</p>
       )}
       <form onSubmit={save} className="match-form">
         <fieldset disabled={busy}>
-          <legend>{match ? "Spelarpar" : "1. Vilka spelade?"}</legend>
+          <legend>Spelarpar</legend>
           <div className="pair-options">
             {(match
               ? [[match.player1_id, match.player2_id] as [PlayerId, PlayerId]]
@@ -140,7 +138,7 @@ export function MatchForm({
         {pair && (
           <>
             <fieldset disabled={busy}>
-              <legend>{match ? "Setresultat" : "2. Hur slutade det?"}</legend>
+              <legend>Vunna set</legend>
               <div className="score-controls">
                 {pair.map((id, i) => (
                   <div className="score-side" key={id}>
@@ -207,11 +205,9 @@ export function MatchForm({
               </div>
             </fieldset>
             <p className="fine-print score-note">
-              Ange vunna set. Oavgjort är tillåtet, 0–0 är inte det.
+              Oavgjort är tillåtet, men inte 0–0.
             </p>
-            <label htmlFor="played-on">
-              {match ? "Matchdatum" : "3. När spelades matchen?"}
-            </label>
+            <label htmlFor="played-on">Matchdatum</label>
             <input
               id="played-on"
               type="date"
@@ -242,7 +238,7 @@ export function MatchForm({
                 }}
               >
                 <ArrowLeft size={17} />
-                Välj annat spelarpar
+                Byt spelarpar
               </button>
             )}
           </>
@@ -261,7 +257,7 @@ export function MatchForm({
       </form>
       {confirm && match && (
         <Modal
-          title="Ta bort matchen?"
+          title="Ta bort match?"
           onClose={() => {
             if (!busy) setConfirm(false);
           }}
@@ -271,8 +267,7 @@ export function MatchForm({
             {match.score1}–{match.score2}
           </p>
           <p className="muted">
-            {dateLabel(match.played_on)}. Matchen tas bort ur tabellen och all
-            statistik.
+            {dateLabel(match.played_on)}. Matchen tas bort permanent.
           </p>
           <div className="dialog-actions">
             <button

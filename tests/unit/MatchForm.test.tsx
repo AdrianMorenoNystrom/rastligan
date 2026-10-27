@@ -53,13 +53,15 @@ describe("matchregistrering", () => {
     fireEvent.change(screen.getByLabelText("Set för Adrian"), {
       target: { value: "5" },
     });
-    fireEvent.change(screen.getByLabelText(/När spelades/), {
+    fireEvent.change(screen.getByLabelText("Matchdatum", { exact: true }), {
       target: { value: "2026-10-22" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Spara match" }));
     await screen.findByRole("alert");
     expect(screen.getByLabelText("Set för Adrian")).toHaveValue(5);
-    expect(screen.getByLabelText(/När spelades/)).toHaveValue("2026-10-22");
+    expect(screen.getByLabelText("Matchdatum", { exact: true })).toHaveValue(
+      "2026-10-22",
+    );
     const first = mocks.request.mock.calls[0][0];
     fireEvent.click(screen.getByRole("button", { name: "Spara match" }));
     await waitFor(() => expect(mocks.request).toHaveBeenCalledTimes(2));

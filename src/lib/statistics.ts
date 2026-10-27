@@ -350,7 +350,7 @@ export function records(matches: Match[]): RecordGroup[] {
         .sort((a, b) => b.value - a.value || a.detail.localeCompare(b.detail)),
     },
     {
-      title: "Mest set i en match",
+      title: "Flest set i en match",
       unit: "set",
       entries: matches
         .map((m) => ({
@@ -391,7 +391,7 @@ export function records(matches: Match[]): RecordGroup[] {
       entries: WEEKDAYS.map((label, i) => ({
         label,
         value: matches.filter((m) => weekday(m.played_on) === i).length,
-        detail: "Samtliga datum i urvalet",
+        detail: "",
       }))
         .filter((r) => r.value > 0)
         .sort((a, b) => b.value - a.value),

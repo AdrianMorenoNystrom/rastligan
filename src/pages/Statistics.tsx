@@ -120,7 +120,7 @@ function Overview({
     <>
       <Metrics
         items={[
-          { label: "Matcher", value: s.matches, hint: "under vald period" },
+          { label: "Matcher", value: s.matches },
           {
             label: "Oavgjort",
             value: fmtPercent(s.drawPercent),
@@ -134,12 +134,11 @@ function Overview({
           {
             label: "Aktiva speldagar",
             value: s.days,
-            hint: "unika matchdatum",
           },
         ]}
       />
       <div className="resolution-bar">
-        <span>Diagrammens perioder</span>
+        <span>Gruppera efter</span>
         <select
           aria-label="Diagrammens upplösning"
           value={resolution || "auto"}
@@ -157,20 +156,20 @@ function Overview({
       </div>
       <Chart
         title="Prestationsutveckling"
-        description="Poäng per match inom varje period. Luckor betyder att matcher saknas."
+        description="P/M = poäng per match i perioden. Luckor visar saknade matcher."
         data={performance(all, range, res)}
         max={3}
       />
       <div className="chart-grid">
         <Chart
           title="Matchaktivitet"
-          description={`Antal matcher per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
+          description={`Matcher per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
           data={performance(all, range, res)}
           activity
         />
         <Chart
           title="Poängutveckling"
-          description="Ackumulerade poäng vid varje speldags slut. Tidigare poäng följer med in i perioden."
+          description="Totalpoäng vid dagens slut, inklusive poäng före vald period."
           data={cumulative(all, range)}
           step
           unit="poäng"
@@ -198,7 +197,6 @@ function ActivityCalendar({ matches }: { matches: Match[] }) {
       <div className="section-heading">
         <div>
           <h2>Speldagar</h2>
-          <p className="muted">Matchaktivitet dag för dag</p>
         </div>
         <label className="sr-only" htmlFor="activity-month">
           Kalendermånad
@@ -249,7 +247,7 @@ function ActivityCalendar({ matches }: { matches: Match[] }) {
       <p className="fine-print calendar-detail" role="status">
         {chosen
           ? `${chosen}: ${counts.get(chosen) || 0} matcher i urvalet.`
-          : "Tryck på en dag för exakt antal matcher i urvalet."}
+          : "Välj dag för antal matcher."}
       </p>
     </section>
   );
@@ -292,7 +290,6 @@ function Profile({
         </span>
         <div>
           <h2>{player(id).name}</h2>
-          <p>{s.matches} matcher under vald period</p>
         </div>
         {s.matches > 0 && s.matches < 5 && (
           <span className="tag warning">Litet underlag</span>
@@ -411,8 +408,8 @@ function Profile({
         </label>
       </div>
       <Chart
-        title={`${player(id).name} · utveckling`}
-        description={`${metric === "ppm" ? "P/M" : "Vinstprocent"} per ${resolution === "week" ? "vecka" : "månad"}, med antal matcher som underlag.`}
+        title="Utveckling"
+        description={`${metric === "ppm" ? "Poäng per match" : "Vinstprocent"}, ${resolution === "week" ? "veckovis" : "månadsvis"}.`}
         data={performance(all, range, resolution, metric)}
         players={[id]}
         unit={metric === "ppm" ? "P/M" : "%"}
@@ -422,8 +419,7 @@ function Profile({
         <h2>Senaste 30 kalenderdagarna</h2>
         <p className="muted">
           {dayAdd(today(), -29)} – {today()}, jämfört med {dayAdd(today(), -59)}{" "}
-          – {dayAdd(today(), -30)}. Båda perioderna begränsas av ditt
-          datumfilter.
+          – {dayAdd(today(), -30)}. Datumfiltret gäller båda perioderna.
         </p>
         <Metrics
           items={[
@@ -445,8 +441,8 @@ function Profile({
                   : `${comparison.delta > 0 ? "+" : ""}${format(comparison.delta)}`,
               hint:
                 comparison.delta === null
-                  ? "Inget jämförbart underlag"
-                  : "absolut skillnad",
+                  ? "Inget jämförelseunderlag"
+                  : undefined,
             },
           ]}
         />
@@ -465,8 +461,7 @@ function Profile({
             </div>
           </dl>
           <p className="fine-print">
-            Underlag: {s.matches} matcher. Marginal räknas som absolut
-            setskillnad.
+            Marginal anges utan minustecken. Underlag: {s.matches} matcher.
           </p>
           <h3>Vanligaste slutresultat</h3>
           <p className="fine-print">{player(id).name}s set visas först.</p>
@@ -480,7 +475,7 @@ function Profile({
               ))}
             </ol>
           ) : (
-            <Empty title="Inga resultat ännu" />
+            <Empty title="Inga resultat i urvalet" />
           )}
         </section>
         <section className="card">
@@ -506,7 +501,7 @@ function Profile({
             </tbody>
           </table>
           <p className="fine-print">
-            M visar underlaget. Färre än fem matcher ger osäkra jämförelser.
+            M = matcher. Färre än 5 ger litet underlag.
           </p>
         </section>
       </div>
@@ -591,15 +586,13 @@ function Duel({
         </table>
         <p className="fine-print centered">
           Underlag: {data.length} matcher per spelare.
-          {data.length > 0 && data.length < 5
-            ? " Litet underlag – tolka snitt med försiktighet."
-            : ""}
+          {data.length > 0 && data.length < 5 ? " Litet underlag." : ""}
         </p>
       </section>
       <div className="chart-grid">
         <Chart
           title="Poäng inom duellen"
-          description="Ackumulerade inbördes poäng vid varje speldags slut."
+          description="Inbördes totalpoäng vid dagens slut."
           data={cumulative(allPair, range)}
           step
           players={pair}
@@ -607,7 +600,7 @@ function Duel({
         />
         <Chart
           title="Månadsvis prestation"
-          description="Poäng per match mot varandra inom varje månad."
+          description="Poäng per match och månad."
           data={performance(allPair, range, "month")}
           players={pair}
           max={3}
@@ -628,7 +621,7 @@ function Duel({
             ))}
           </ol>
         ) : (
-          <Empty title="Duellen väntar på sin första match" />
+          <Empty title="Inga matcher i urvalet" />
         )}
       </section>
     </>
@@ -641,9 +634,13 @@ function RecordCard({ group }: { group: RecordGroup }) {
     <section className="card record-card">
       <div className="record-heading">
         <h2>{group.title}</h2>
-        <span className="tag">
-          {group.performance ? "Minst 5 matcher" : "Historisk topplista"}
-        </span>
+        {group.performance && (
+          <span className="tag">
+            {group.title.includes("förbättring")
+              ? "Minst 5 matcher i båda månaderna"
+              : "Minst 5 matcher/månad"}
+          </span>
+        )}
       </div>
       {entries.length ? (
         <ol className="record-list">
@@ -654,12 +651,15 @@ function RecordCard({ group }: { group: RecordGroup }) {
               </span>
               <div>
                 <strong>{r.label}</strong>
-                <small>
-                  {r.detail}
-                  {r.count !== undefined
-                    ? ` · ${r.count} matcher${group.title.includes("förbättring") ? " eller fler i vardera månaden" : ""}`
-                    : ""}
-                </small>
+                {((r.detail && r.detail !== r.label) ||
+                  r.count !== undefined) && (
+                  <small>
+                    {r.detail !== r.label ? r.detail : null}
+                    {r.count !== undefined
+                      ? ` · ${r.count} matcher${group.title.includes("förbättring") ? " eller fler i vardera månaden" : ""}`
+                      : ""}
+                  </small>
+                )}
                 {group.entries.filter((x) => x.value === r.value).length >
                   1 && <small>Delad placering</small>}
               </div>
@@ -673,8 +673,8 @@ function RecordCard({ group }: { group: RecordGroup }) {
       ) : (
         <p className="record-empty">
           {group.performance
-            ? "Inget kvalificerat rekord. Minst fem matcher per spelare och månad krävs."
-            : "Inget underlag i vald period."}
+            ? "Inget kvalificerat rekord."
+            : "Inga rekord i urvalet."}
         </p>
       )}
       {group.entries.length > 5 && (
@@ -710,9 +710,7 @@ export default function Statistics() {
   }
   return (
     <>
-      <PageHeading eyebrow="Varje match räknas" title="Statistik">
-        <span className="small-label">Beräknad från matchhistoriken</span>
-      </PageHeading>
+      <PageHeading title="Statistik" />
       <DateFilter value={preset} range={range} onChange={changePeriod} />
       <nav className="statistics-tabs" aria-label="Statistiksektioner">
         {tabs.map(([s, label]) => (
@@ -727,7 +725,7 @@ export default function Statistics() {
         ))}
       </nav>
       <ErrorText>
-        {invalid ? "Startdatum måste vara före eller samma som slutdatum." : ""}
+        {invalid ? "Från-datum får inte vara efter till-datum." : ""}
       </ErrorText>
       {!invalid && (
         <Suspense fallback={<p role="status">Laddar diagram…</p>}>
@@ -750,9 +748,8 @@ export default function Statistics() {
             <>
               <p className="info-note">
                 <Info size={17} />
-                Prestationsrekord kräver minst fem matcher per spelare och
-                kalendermånad. Datumfiltret begränsar underlaget. Vid lika
-                värden delas placeringen.
+                Prestationsrekord kräver minst 5 matcher per spelare och
+                kalendermånad. Datumfiltret gäller även rekord.
               </p>
               <div className="records-grid">
                 {records(selected).map((g) => (

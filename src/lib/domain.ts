@@ -43,7 +43,7 @@ export function validateMatch(m: MatchInput): string | null {
   )
     return "Välj två olika spelare.";
   if (![m.score1, m.score2].every((n) => Number.isSafeInteger(n) && n >= 0))
-    return "Set måste vara icke-negativa heltal.";
+    return "Ange hela antal set, minst 0.";
   if (m.score1 === 0 && m.score2 === 0) return "Ange minst ett spelat set.";
   if (!isDate(m.played_on)) return "Ange ett giltigt matchdatum.";
   return null;

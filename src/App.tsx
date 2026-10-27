@@ -130,10 +130,6 @@ function Shell() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-        <footer className="app-footer">
-          <span>RASTLIGAN</span>
-          <p>Pingis på rasten. Resultaten stannar kvar.</p>
-        </footer>
       </main>
       <nav className="mobile-nav" aria-label="Mobilnavigation">
         {links.map(({ to, label, icon: Icon }) => (
@@ -145,7 +141,7 @@ function Shell() {
       </nav>
       {login && (
         <Modal
-          title={auth.session ? "Redigerarläge" : "Logga in som redigerare"}
+          title={auth.session ? "Redigerarläge" : "Logga in"}
           onClose={() => setLogin(false)}
         >
           <Login onDone={() => setLogin(false)} />

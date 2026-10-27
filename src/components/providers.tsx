@@ -66,9 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const session = token ? query.data || null : null;
   const checking = Boolean(token) && query.isPending;
-  const error = query.isError
-    ? "Kunde inte kontrollera redigerarsessionen. Försök igen när anslutningen är tillbaka."
-    : "";
+  const error = query.isError ? "Kunde inte kontrollera inloggningen." : "";
   useEffect(() => {
     const changed = (e: StorageEvent) => {
       if (e.key === tokenKey) setToken(e.newValue);

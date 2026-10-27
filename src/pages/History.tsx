@@ -29,7 +29,7 @@ export default function History() {
   const current = Math.min(page, pages);
   return (
     <>
-      <PageHeading eyebrow="Hela matchhistoriken" title="Matcher">
+      <PageHeading title="Matcher">
         <span className="tag">{filtered.length} matcher</span>
       </PageHeading>
       <section className="card filters">
@@ -108,9 +108,7 @@ export default function History() {
           </label>
         </div>
         <ErrorText>
-          {badRange
-            ? "Startdatum måste vara före eller samma som slutdatum."
-            : ""}
+          {badRange ? "Från-datum får inte vara efter till-datum." : ""}
         </ErrorText>
       </section>
       <section className="card history-card">
@@ -121,7 +119,7 @@ export default function History() {
           />
         )}
         <div className="history-footer">
-          <span>Samma datum innebär ingen känd spelordning.</span>
+          <span>Spelordningen inom samma dag är okänd.</span>
           <button
             className="icon-button"
             onClick={() => void query.refetch()}

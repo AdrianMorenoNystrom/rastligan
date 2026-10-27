@@ -20,23 +20,17 @@ export class ApiError extends Error {
 }
 function errorMessage(code: string) {
   const errors: Record<string, string> = {
-    configuration:
-      "Datakällan är inte ansluten. Konfigurera Supabase enligt README.",
-    invalid_login: "Koden kunde inte verifieras. Kontrollera spelare och kod.",
+    configuration: "Ligan är inte ansluten.",
+    invalid_login: "Fel spelare eller kod.",
     rate_limited: "För många inloggningsförsök. Försök igen om 15 minuter.",
-    unauthorized: "Din redigerarsession har avslutats. Logga in igen.",
-    match_changed:
-      "Matchen har ändrats på en annan enhet. Hämta aktuell version innan du försöker igen.",
+    unauthorized: "Sessionen har avslutats. Logga in igen.",
+    match_changed: "Matchen har ändrats. Hämta aktuell version.",
     not_found: "Matchen finns inte längre. Uppdatera matchhistoriken.",
     invalid_match: "Matchen kunde inte sparas. Kontrollera resultat och datum.",
-    server_configuration:
-      "Servern är inte färdigkonfigurerad. Kontrollera funktionens miljövariabler.",
-    origin_denied: "Den här webbplatsens adress är inte tillåten av servern.",
+    server_configuration: "Ligan är inte konfigurerad.",
+    origin_denied: "Åtkomst är inte tillåten från den här adressen.",
   };
-  return (
-    errors[code] ||
-    "Kunde inte nå ligan. Kontrollera anslutningen och försök igen."
-  );
+  return errors[code] || "Kunde inte nå ligan. Kontrollera anslutningen.";
 }
 export async function loadMatches(): Promise<Match[]> {
   if (!supabase) throw new ApiError("configuration");

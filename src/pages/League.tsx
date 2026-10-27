@@ -10,9 +10,7 @@ export default function League() {
   const rows = standings(matches);
   return (
     <>
-      <PageHeading eyebrow="Adrian · Dave · Elias" title="Ligan">
-        <span className="small-label">3 poäng för vinst · 1 för oavgjort</span>
-      </PageHeading>
+      <PageHeading title="Ligan" />
       <section className="card league-card">
         <div className="league-card-heading">
           <h2>Ligatabellen</h2>
@@ -75,8 +73,8 @@ export default function League() {
           </tbody>
         </table>
         <p className="table-note">
-          Placering efter poäng, setskillnad och vunna set. Lika värden ger
-          delad plats.
+          P/M = poäng per match. Placering efter poäng, setskillnad och vunna
+          set. Lika värden ger delad plats.
         </p>
       </section>
       <Link to="/registrera" className="button primary register-cta">
@@ -93,9 +91,6 @@ export default function League() {
           link="Alla matcher"
         />
         <MatchList matches={[...matches].sort(newest).slice(0, 3)} />
-        <p className="fine-print list-note">
-          Matcher samma datum visas utan inbördes spelordning.
-        </p>
       </section>
       <div className="league-summary">
         <div>
@@ -112,7 +107,7 @@ export default function League() {
           <span>den här månaden</span>
         </div>
         <Link to="/statistik">
-          Utforska statistiken
+          Statistik
           <ArrowUpRight size={17} />
         </Link>
       </div>

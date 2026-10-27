@@ -52,7 +52,12 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
     .click();
   await page.getByLabel("Från", { exact: true }).fill("2026-10-22");
   await page.getByLabel("Till", { exact: true }).fill("2026-10-26");
-  await expect(page.getByText("5 matcher under vald period")).toBeVisible();
+  await expect(
+    page
+      .locator(".metric")
+      .filter({ hasText: /^Matcher/ })
+      .locator("strong"),
+  ).toHaveText("5");
   await capture(page, {
     path: `artifacts/screenshots/profil-${info.project.name}.png`,
     fullPage: true,
@@ -137,7 +142,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       fullPage: true,
     });
     await page.getByLabel("Personlig kod").fill(code);
-    await page.getByRole("button", { name: "Fortsätt", exact: true }).click();
+    await page.getByRole("button", { name: "Logga in", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Adrian mot Dave", exact: true }),
     ).toBeVisible();
@@ -148,7 +153,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       page.getByRole("button", { name: "Spara match", exact: true }),
     ).toBeDisabled();
     await page.getByRole("button", { name: "Öka Adrian" }).click();
-    await page.getByLabel(/När spelades/).fill(date);
+    await page.getByLabel("Matchdatum", { exact: true }).fill(date);
     await capture(page, {
       path: `artifacts/screenshots/registrera-${info.project.name}.png`,
       fullPage: true,
@@ -156,7 +161,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
     await page
       .getByRole("button", { name: "Spara match", exact: true })
       .click();
-    await expect(page.getByRole("status")).toContainText("Matchen har sparats");
+    await expect(page.getByRole("status")).toContainText("Match sparad");
     const snapshot = await admin.rpc("league_snapshot");
     expect(snapshot.data.count).toBe(initialCount + 1);
     id = snapshot.data.matches.find(

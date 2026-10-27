@@ -410,7 +410,7 @@ ol {
 }
 .main-content {
   max-width: 1120px;
-  padding: 34px 32px 0;
+  padding: 34px 32px 24px;
   margin: auto;
   outline: none;
 }
@@ -420,19 +420,6 @@ ol {
   align-items: flex-end;
   gap: 16px;
   margin-bottom: 25px;
-}
-.eyebrow {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 650;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.small-label {
-  font-size: 11px;
-  color: var(--muted);
-  padding-bottom: 4px;
 }
 .league-card {
   padding: 0;
@@ -548,7 +535,7 @@ ol {
   line-height: 1.3;
 }
 .recent-card {
-  padding: 16px 24px 15px;
+  padding: 16px 24px 4px;
 }
 .match-row {
   display: flex;
@@ -598,10 +585,6 @@ ol {
   color: #7790a7;
   font-size: 14px;
 }
-.list-note {
-  border-top: 1px solid #30465b;
-  padding-top: 13px;
-}
 .league-summary {
   display: flex;
   align-items: center;
@@ -630,24 +613,6 @@ ol {
   gap: 8px;
   min-height: 44px;
 }
-.app-footer {
-  margin-top: 50px;
-  padding: 21px 0 26px;
-  border-top: 1px solid #2b4056;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #93a9bd;
-}
-.app-footer > span {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-.app-footer > p {
-  font-size: 10px;
-}
 .mobile-nav {
   display: none;
 }
@@ -656,7 +621,7 @@ ol {
   align-items: center;
   flex-direction: column;
   text-align: center;
-  padding: 35px 10px;
+  padding: 24px 10px;
   gap: 10px;
   color: var(--muted);
 }
@@ -750,21 +715,6 @@ ol {
 .modal-heading .icon-button {
   margin-right: -8px;
 }
-.login-symbol {
-  width: 56px;
-  height: 56px;
-  background: #293f45;
-  color: var(--accent);
-  border: 1px solid #42594d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 13px;
-  margin-bottom: 20px;
-}
-.login-form > .muted {
-  margin-bottom: 23px;
-}
 .segmented {
   display: flex;
   background: #14263a;
@@ -801,12 +751,12 @@ ol {
   margin-top: 14px;
   margin-bottom: 0;
 }
+.session-panel > .button {
+  margin-top: 20px;
+}
 .session-panel > svg {
   color: var(--accent);
   margin: 0 0 16px;
-}
-.session-panel > .muted {
-  margin: 8px 0 25px;
 }
 .dialog-actions {
   display: flex;
@@ -1218,9 +1168,6 @@ ol {
 .chart-grid .chart-heading h2 {
   font-size: 16px;
 }
-.chart-grid .chart-heading p {
-  min-height: 36px;
-}
 .activity-calendar {
   max-width: 540px;
 }
@@ -1311,11 +1258,6 @@ ol {
 }
 .profile-heading h2 {
   font-size: 23px;
-}
-.profile-heading p {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 3px;
 }
 .profile-heading .tag {
   margin-left: auto;
@@ -1612,14 +1554,8 @@ ol {
     padding-left: 24px;
     padding-right: 24px;
   }
-  .small-label {
-    display: none;
-  }
   .chart-grid {
     grid-template-columns: 1fr;
-  }
-  .chart-grid .chart-heading p {
-    min-height: 0;
   }
   .filter-grid {
     grid-template-columns: 1fr 1fr;
@@ -1665,11 +1601,6 @@ ol {
   .page-heading {
     margin-bottom: 21px;
     gap: 8px;
-  }
-  .eyebrow {
-    font-size: 9px;
-    letter-spacing: 1.2px;
-    margin-bottom: 7px;
   }
   h1 {
     font-size: 29px;
@@ -1749,7 +1680,7 @@ ol {
     border-radius: 9px;
   }
   .recent-card {
-    padding: 11px 16px 13px;
+    padding: 11px 16px 4px;
   }
   .section-heading {
     margin-bottom: 5px;
@@ -1801,10 +1732,6 @@ ol {
     width: 34px;
     height: 44px;
   }
-  .list-note {
-    font-size: 9px;
-    padding-top: 11px;
-  }
   .league-summary {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1828,18 +1755,6 @@ ol {
     justify-content: space-between;
     border-top: 1px solid var(--line);
     padding-top: 6px;
-  }
-  .app-footer {
-    margin-top: 35px;
-    padding-top: 18px;
-  }
-  .app-footer > p {
-    font-size: 8px;
-    max-width: 155px;
-    text-align: right;
-  }
-  .app-footer > span {
-    font-size: 8px;
   }
   .mobile-nav {
     position: fixed;
@@ -1887,9 +1802,6 @@ ol {
   }
   .modal-heading {
     margin-bottom: 15px;
-  }
-  .login-form > .muted {
-    font-size: 12px;
   }
   .narrow .page-heading {
     margin-bottom: 22px;
@@ -2078,9 +1990,6 @@ ol {
   .profile-heading .tag {
     font-size: 8px;
     padding: 4px 5px;
-  }
-  .profile-heading p {
-    font-size: 10px;
   }
   .stat-list > div {
     font-size: 11px;

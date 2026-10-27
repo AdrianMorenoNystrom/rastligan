@@ -10,12 +10,7 @@ export function MatchList({
   matches: Match[];
   onEdit?: (m: Match) => void;
 }) {
-  if (!matches.length)
-    return (
-      <Empty title="Inga matcher i urvalet">
-        Prova ett annat filter eller registrera ligans första match.
-      </Empty>
-    );
+  if (!matches.length) return <Empty title="Inga matcher i urvalet" />;
   return (
     <div className="match-list">
       {matches.map((m) => (
