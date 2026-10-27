@@ -45,11 +45,11 @@ test("kod kan inte skickas genom vanlig stdin", () => {
         input: new PassThrough(),
         output: new PassThrough(),
       }),
-    /interaktiv terminal/,
+    /PowerShell eller Windows Terminal/,
   );
 });
 
-test("terminalinmatning skriver aldrig ut kod eller stjärnor", async () => {
+test("terminalinmatning visar stjärnor utan att röja koden", async () => {
   const input = new PassThrough();
   input.isTTY = true;
   input.setRawMode = () => input;
@@ -61,7 +61,10 @@ test("terminalinmatning skriver aldrig ut kod eller stjärnor", async () => {
   const answer = readHiddenCode("Kod: ", { input, output });
   input.write("egen-hemlig-testkod-123\r");
   assert.equal(await answer, "egen-hemlig-testkod-123");
-  assert.equal(displayed, "Kod: \n");
+  assert.equal(
+    displayed,
+    "Kod: " + "*".repeat(Array.from("egen-hemlig-testkod-123").length) + "\n",
+  );
 });
 
 test("Ctrl+C avbryter kodinmatning utan att röja kod", async () => {
@@ -76,5 +79,50 @@ test("Ctrl+C avbryter kodinmatning utan att röja kod", async () => {
   const answer = readHiddenCode("Kod: ", { input, output });
   input.write("hemlig-påbörjad-kod\x03");
   await assert.rejects(answer, /avbröts/);
-  assert.equal(displayed, "Kod: \n");
+  assert.equal(
+    displayed,
+    "Kod: " + "*".repeat(Array.from("hemlig-påbörjad-kod").length) + "\n",
+  );
+});
+
+test("backsteg fungerar för siffror och Unicode och terminalen återställs", async () => {
+  const input = new PassThrough();
+  input.isTTY = true;
+  input.isRaw = false;
+  input.setRawMode = (raw) => {
+    input.isRaw = raw;
+    return input;
+  };
+  const output = new PassThrough();
+  let displayed = "";
+  output.on("data", (chunk) => {
+    displayed += chunk.toString();
+  });
+  const answer = readHiddenCode("Kod: ", { input, output });
+  assert.equal(input.isRaw, true);
+  input.write("1🎾\x7f2\r\n");
+  assert.equal(await answer, "12");
+  assert.equal(displayed, "Kod: **\b \b*\n");
+  assert.equal(input.isRaw, false);
+  assert.equal(input.listenerCount("keypress"), 0);
+  assert.equal(input.isPaused(), true);
+});
+
+test("båda kodfrågorna tar emot maskerad inmatning", async () => {
+  const input = new PassThrough();
+  input.isTTY = true;
+  input.setRawMode = () => input;
+  const output = new PassThrough();
+  let displayed = "";
+  output.on("data", (chunk) => {
+    displayed += chunk.toString();
+  });
+  const answer = chooseEditorCode((prompt) =>
+    readHiddenCode(prompt, { input, output }),
+  );
+  input.write("7\r");
+  await new Promise((resolve) => setImmediate(resolve));
+  input.write("7\r");
+  assert.equal(await answer, "7");
+  assert.equal(displayed, "Ny kod (visas som *): *\nUpprepa koden: *\n");
 });

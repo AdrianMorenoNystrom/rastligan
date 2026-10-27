@@ -43,7 +43,7 @@ npm run admin -- enable elias
 
 Bootstrap skapar tre kryptografiskt slumpade koder i en transaktion och vägrar köras om credentials redan finns. `code` genererar en ny kod och återkallar spelarens sessioner. Koder skrivs bara i terminalen: förvara dem i lösenordshanterare och dela privat med respektive spelare. De ska aldrig läggas i Git eller frontendmiljön.
 
-`set-code` låter dig välja kod själv: skriv den dolt två gånger i en interaktiv terminal. Alla icke-tomma koder fungerar, utan minimi- eller maxlängd i appen. Kommandot visar vilken databas och spelare det gäller men skriver aldrig ut din kod. Kodbyte återkallar spelarens befintliga sessioner. Ange inte koden som ett kommandoradsargument.
+`set-code` låter dig välja kod själv: skriv den två gånger i PowerShell eller Windows Terminal. Stjärnor visas medan du skriver; tryck Enter efter varje inmatning. Backsteg fungerar och Ctrl+C avbryter utan att ändra koden. Alla icke-tomma koder fungerar, utan minimi- eller maxlängd i appen. Kommandot visar vilken databas och spelare det gäller men skriver aldrig ut din kod. Kodbyte återkallar spelarens befintliga sessioner. Ange inte koden som ett kommandoradsargument.
 
 För ditt produktionsprojekt, använd den separata, gitignorerade `.env.production.local` med produktions-URL och service-role-nyckel:
 
