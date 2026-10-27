@@ -21,7 +21,9 @@ Originalarket lästes autentiserat och ändrades inte. Källkopian behåller rad
 
 GitHub Actions för kvalitet, GitHub Pages och Supabase-deployment finns. Frontend använder repository-anpassad base-sökväg och HashRouter. Servernycklar, lokala miljöfiler och testkoder är gitignorerade.
 
-**Live-drift och produktionsimport återstår:** ingen autentiserad Supabase-produktionsanslutning är tillgänglig. Frontend publiceras därför först när verkliga produktionsvariabler finns. Inga produktionskoder har skapats och ingen live-URL påstås fungera. Följ produktionsstegen i [README](README.md#produktionsdrift) när ett Supabase-projekt har anslutits.
+**Uppdatering 2026-10-27:** Supabase-produktionsprojektet är nu anslutet och har fått åtta matcher från en ny läsning av originalarket. Den lokala databasen har också åtta matcher. Produktionsimport och återimportkontroll är verifierade. Spelarkoder har inte ändrats vid denna import. Webbpublicering följer stegen i [README](README.md#produktionsdrift).
+
+Egenvalda spelarkoder kan nu ändras med `set-code`, med dold inmatning och bekräftelse i terminalen. Produktionskommandona finns i README. Den ursprungliga sjumatchersfilen används fortsatt som oföränderlig testfixture i CI.
 
 ## Granskningsbilder
 

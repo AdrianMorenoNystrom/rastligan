@@ -35,12 +35,25 @@ Med `SUPABASE_URL` och `SUPABASE_SERVICE_ROLE_KEY` i den ignorerade `.env.local`
 ```sh
 npm run admin -- bootstrap
 npm run admin -- code adrian
+npm run admin -- set-code adrian
 npm run admin -- revoke dave
 npm run admin -- disable elias
 npm run admin -- enable elias
 ```
 
 Bootstrap skapar tre kryptografiskt slumpade koder i en transaktion och vägrar köras om credentials redan finns. `code` genererar en ny kod och återkallar spelarens sessioner. Koder skrivs bara i terminalen: förvara dem i lösenordshanterare och dela privat med respektive spelare. De ska aldrig läggas i Git eller frontendmiljön.
+
+`set-code` låter dig välja kod själv: skriv den dolt två gånger i en interaktiv terminal. Koden ska ha minst 16 tecken och högst 72 byte (72 vanliga ASCII-tecken). Kommandot visar vilken databas och spelare det gäller men skriver aldrig ut din kod. Kodbyte återkallar spelarens befintliga sessioner. Ange inte koden som ett kommandoradsargument.
+
+För ditt produktionsprojekt, använd den separata, gitignorerade `.env.production.local` med produktions-URL och service-role-nyckel:
+
+```powershell
+node --env-file=.env.production.local scripts/admin.mjs set-code adrian
+node --env-file=.env.production.local scripts/admin.mjs set-code dave
+node --env-file=.env.production.local scripts/admin.mjs set-code elias
+```
+
+`npm run admin` använder fortfarande den lokala testdatabasen i `.env.local`. Ovanstående produktionskommandon väljer produktionsfilen uttryckligen.
 
 Koder lagras i ett privat schema som individuellt saltade bcrypt-hashar med kostnad 12. Servern tillåter högst fem inloggningsförsök per identitet och 30 per hashad nätverksadress under 15 minuter, även över flera funktionsinstanser. Identitetsgränsen fungerar även när proxyn delar eller maskerar klientadresser. `RATE_LIMIT_PEPPER` måste vara minst 32 tecken och sättas endast på servern.
 
@@ -63,7 +76,9 @@ npm run import -- --file data/source-google-sheets.json
 npm run import -- --file data/source-google-sheets.json --apply --report data/import-report.json
 ```
 
-Lokal import har verifierats: Elias 9 poäng / 5 matcher, Dave 5 / 4, Adrian 4 / 5. Tre oavgjorda. Upprepad import identifierar sju redan importerade matcher och skapar inga dubbletter. **Detta är lokal import; produktionsimport är inte genomförd utan produktionsanslutning.**
+Den första lokala importen gav sju matcher: Elias 9 poäng / 5 matcher, Dave 5 / 4, Adrian 4 / 5. Tre oavgjorda. Upprepad import identifierade sju redan importerade matcher och skapade inga dubbletter.
+
+Uppdatering 2026-10-27: en ny hämtning från originalarket innehöll åtta matcher. Alla åtta importerades till produktionsprojektet och den nya matchen lades till i den lokala databasen. Efterkontroll: åtta redan importerade rader, inga ogiltiga eller ändrade rader. Aktuell tabell: Elias 9 poäng / 5 matcher, Dave 8 / 5, Adrian 4 / 6. Den versionshanterade källkopian ovan behåller de ursprungliga sju matcherna som fast underlag för isolerade CI/E2E-tester.
 
 Direktläsning stöds med OAuth-token i `GOOGLE_ACCESS_TOKEN`, med scope `https://www.googleapis.com/auth/spreadsheets.readonly` och läsbehörighet till arket:
 
@@ -98,6 +113,7 @@ Skapande använder ett beständigt idempotenskvitto även efter borttagning. Kli
 npm run typecheck
 npm run lint
 npm test
+npm run test:admin
 npm run test:db
 npm run test:prepare
 npm run test:security
