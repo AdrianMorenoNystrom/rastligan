@@ -18,9 +18,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: 2.104.0
+          version: 2.122.0
       - name: Validate configuration
         run: test -n "$SUPABASE_ACCESS_TOKEN" && test -n "$SUPABASE_DB_PASSWORD" && test -n "$SUPABASE_PROJECT_REF"
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-      - run: supabase db push
+      - run: supabase db push --linked
       - run: supabase functions deploy editor --project-ref "$SUPABASE_PROJECT_REF"

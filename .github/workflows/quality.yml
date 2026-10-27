@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  packages: read
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -21,11 +22,34 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:admin
+      - run: node --test tests/ci-startup.test.mjs
       - uses: supabase/setup-cli@v1
         with:
-          version: 2.104.0
+          version: 2.122.0
+      - name: Authenticate container downloads
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Supabase images
+        id: supabase-images
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/rastligan/supabase-images.tar.gz
+          key: supabase-2.122.0-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('supabase/config.toml') }}
+      - name: Restore cached images
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: gzip -dc ~/.cache/rastligan/supabase-images.tar.gz | docker load
       - name: Start isolated local Supabase
-        run: supabase start -x studio,imgproxy,realtime,storage-api,gotrue,mailpit,postgres-meta,logflare,vector,supavisor
+        run: node scripts/start-ci-supabase.mjs
+      - name: Save downloaded images for future runs
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/rastligan
+          mapfile -t images < <(docker image ls --format '{{.Repository}}:{{.Tag}}' | awk '/^(public\.ecr\.aws\/supabase\/|ghcr\.io\/supabase\/|supabase\/)/ && !/:<none>$/')
+          test "${#images[@]}" -gt 0
+          docker save "${images[@]}" | gzip -1 > ~/.cache/rastligan/supabase-images.tar.gz
       - run: npm run local:configure
       - run: npm run test:db
       - name: Serve actual Edge Function

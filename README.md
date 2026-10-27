@@ -136,6 +136,8 @@ E2E kräver de sju importerade originalmatcherna lokalt och en startad Edge Func
 
 ”Quality” installerar beroenden, kör typkontroll/lint/enhetstester, startar en isolerad Supabase, kör databas-/HTTP-/E2E-tester, bygger och söker efter serverhemligheter i bygget. PostgreSQL-migrationer och Edge-funktioner ligger under `supabase/`. Pages bygger enbart statiska filer från `dist/`. GitHub Pages för ett privat repository kräver en GitHub-plan som stöder det; annars kan ägaren välja offentlig repositorysynlighet.
 
+CI använder Supabase CLI 2.122.0, autentiserad GHCR-hämtning och cache för Docker-avbilder. Tillfälliga registry-/nätverksfel återförsöks via andra registry-speglar. Databas- och migrationsfel stoppar fortfarande körningen; inga integrationskontroller hoppas över. Cachen innehåller avbilder, inte databasvolymer eller runtime-miljöfiler.
+
 ## Vanliga fel
 
 - **Datakällan är inte ansluten:** kontrollera båda publika `VITE_`-värdena och starta om Vite. I Pages krävs ett nytt bygge efter variabeländring.
