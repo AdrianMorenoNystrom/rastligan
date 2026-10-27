@@ -1,0 +1,69 @@
+{
+  "name": "rastligan",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:db": "node --env-file-if-exists=.env.local scripts/test-db.mjs",
+    "test:security": "node --env-file-if-exists=.env.local --env-file-if-exists=.env.test.local scripts/test-security.mjs",
+    "local:configure": "node scripts/configure-local.mjs",
+    "test:prepare": "node --env-file-if-exists=.env.local scripts/prepare-e2e.mjs",
+    "admin": "node --env-file-if-exists=.env.local scripts/admin.mjs",
+    "import": "tsx --env-file-if-exists=.env.local scripts/import.ts",
+    "backend:serve": "supabase functions serve editor --env-file supabase/.env.local",
+    "backend:deploy": "node scripts/deploy-backend.mjs",
+    "format": "prettier --write src scripts tests .github *.json *.ts *.js *.html README.md"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "@tanstack/react-query": "^5.105.0",
+    "lucide-react": "^1.62.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "csv-parse": "^7.0.3",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "exceljs": "^4.4.0",
+    "globals": "^17.13.0",
+    "jsdom": "^29.1.1",
+    "pg": "^8.23.1",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  }
+}

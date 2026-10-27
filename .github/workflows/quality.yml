@@ -1,0 +1,56 @@
+name: Quality
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.104.0
+      - name: Start isolated local Supabase
+        run: supabase start -x studio,imgproxy,realtime,storage-api,gotrue,mailpit,postgres-meta,logflare,vector,supavisor
+      - run: npm run local:configure
+      - run: npm run test:db
+      - name: Serve actual Edge Function
+        run: |
+          supabase functions serve editor --env-file supabase/.env.local > /tmp/rastligan-edge.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"action":"session"}' http://127.0.0.1:55431/functions/v1/editor || true)
+            if [ "$status" = "401" ]; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/rastligan-edge.log
+          exit 1
+      - run: npm run test:prepare
+      - run: npm run test:security
+      - name: Import verified original source into isolated database
+        run: npm run import -- --file data/source-google-sheets.json --apply --report data/ci-import-report.json
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run build
+      - name: Verify no secrets in static assets
+        run: node --env-file=.env.local --env-file=.env.test.local scripts/check-build.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-review
+          path: |
+            artifacts/screenshots/
+            playwright-report/
+          retention-days: 14

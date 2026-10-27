@@ -1,0 +1,34 @@
+project_id = "rastligan"
+
+[api]
+enabled = true
+port = 55431
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 55432
+shadow_port = 55430
+major_version = 17
+
+[studio]
+enabled = true
+port = 55433
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:5173"
+enable_signup = false
+
+[storage]
+enabled = false
+
+[realtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[functions.editor]
+verify_jwt = false
