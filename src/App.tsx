@@ -22,6 +22,7 @@ import { DataBoundary, Modal } from "./components/ui";
 import { Login } from "./components/Login";
 import { player } from "./lib/domain";
 import League from "./pages/League";
+import { GlassMaterial } from "./components/GlassMaterial";
 const History = lazy(() => import("./pages/History"));
 const Register = lazy(() => import("./pages/Register"));
 const Statistics = lazy(() => import("./pages/Statistics"));
@@ -57,6 +58,7 @@ function Shell() {
             Rastligan<span className="brand-period">.</span>
           </Link>
           <nav className="desktop-nav" aria-label="Huvudnavigation">
+            <GlassMaterial />
             {links.map(({ to, label, icon: Icon }) => (
               <NavLink to={to} key={to} end={to === "/"}>
                 <Icon size={18} />
@@ -136,6 +138,7 @@ function Shell() {
         </Suspense>
       </main>
       <nav className="mobile-nav" aria-label="Mobilnavigation">
+        <GlassMaterial mobile />
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === "/"}>
             <Icon size={22} strokeWidth={1.7} />

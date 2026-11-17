@@ -256,7 +256,7 @@ function ActivityCalendar({ breaks }: { breaks: BreakSession[] }) {
               style={
                 n
                   ? {
-                      background: `rgb(190 242 109 / ${Math.min(0.85, 0.18 + n * 0.1)})`,
+                      background: `rgb(71 145 66 / ${Math.min(0.85, 0.18 + n * 0.1)})`,
                     }
                   : undefined
               }
@@ -367,19 +367,19 @@ function Profile({
                 <span
                   style={{
                     width: `${(s.wins / s.breaks) * 100}%`,
-                    background: "#bef26d",
+                    background: "#77b650",
                   }}
                 />
                 <span
                   style={{
                     width: `${(s.draws / s.breaks) * 100}%`,
-                    background: "#a5b7c9",
+                    background: "#9ba9a1",
                   }}
                 />
                 <span
                   style={{
                     width: `${(s.losses / s.breaks) * 100}%`,
-                    background: "#d4a1ff",
+                    background: "#a186c0",
                   }}
                 />
               </>

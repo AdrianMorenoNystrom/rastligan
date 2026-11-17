@@ -155,6 +155,73 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   ).toBeLessThanOrEqual(info.project.use.viewport!.width);
   expect(errors).toEqual([]);
 });
+
+test("månadsliga, månadsvinnare, tom månad och återgång till totaltabell", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-11-17T12:00:00+01:00"));
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Ligatabellen" }),
+  ).toBeVisible();
+  const total = await page
+    .locator(".league-summary strong")
+    .first()
+    .innerText();
+  await page.getByRole("button", { name: "Månadsliga", exact: true }).click();
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-10");
+  await expect(page.locator(".month-winner")).toContainText("Elias");
+  await expect(page.locator(".month-winner")).toContainText("9");
+  await expect(page.locator(".league-summary strong").first()).toHaveText(
+    total,
+  );
+  await page
+    .locator(".league-table")
+    .getByRole("link", { name: /Adrian/ })
+    .click();
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-01",
+  );
+  await expect(page.getByLabel("Till", { exact: true })).toHaveValue(
+    "2026-10-31",
+  );
+  await page.goBack();
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-11");
+  await expect(page.locator(".month-empty")).toContainText(
+    "Inga raster registrerade",
+  );
+  await expect(page.locator(".month-winner")).toHaveCount(0);
+  await expect(page.locator(".league-table .leader")).toHaveCount(0);
+  await expect(page.locator(".league-summary strong").first()).toHaveText("0");
+  await page
+    .getByRole("button", { name: "Visa oktober 2026", exact: true })
+    .click();
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.reload();
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.getByRole("button", { name: "Totalt", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ligatabellen" }),
+  ).toBeVisible();
+  await expect(page.locator(".league-summary strong").first()).toHaveText(
+    total,
+  );
+  await expect(page.locator(".league-table tbody tr")).toHaveCount(3);
+  const width = page.viewportSize()!.width;
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(width);
+  expect(errors).toEqual([]);
+});
 test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning", async ({
   page,
 }, info) => {

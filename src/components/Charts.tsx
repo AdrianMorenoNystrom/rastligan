@@ -94,7 +94,11 @@ export default function ChartCard({
   };
   const axes = (
     <>
-      <CartesianGrid stroke="#354b60" vertical={false} strokeDasharray="3 5" />
+      <CartesianGrid
+        stroke="var(--line)"
+        vertical={false}
+        strokeDasharray="3 5"
+      />
       <XAxis
         dataKey="time"
         type="number"
@@ -107,14 +111,14 @@ export default function ChartCard({
         ticks={chartData.map((row) => row.time)}
         padding={{ left: 12, right: 12 }}
         tickFormatter={label}
-        tick={{ fill: "#a5b7c9", fontSize: 11 }}
+        tick={{ fill: "var(--muted)", fontSize: 11 }}
         tickLine={false}
         axisLine={false}
         minTickGap={32}
       />
       <YAxis
         width={35}
-        tick={{ fill: "#a5b7c9", fontSize: 11 }}
+        tick={{ fill: "var(--muted)", fontSize: 11 }}
         axisLine={false}
         tickLine={false}
         domain={max ? [0, max] : activity ? [0, "auto"] : ["auto", "auto"]}
@@ -122,7 +126,7 @@ export default function ChartCard({
       />
       <Tooltip
         content={tooltip}
-        cursor={{ stroke: "#a5b7c9", strokeDasharray: "3 3" }}
+        cursor={{ stroke: "var(--muted)", strokeDasharray: "3 3" }}
       />
     </>
   );
@@ -171,7 +175,7 @@ export default function ChartCard({
                   <Bar
                     dataKey={activityKey}
                     name={activityLabel}
-                    fill="#bef26d"
+                    fill="var(--accent)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={40}
                     isAnimationActive={false}
