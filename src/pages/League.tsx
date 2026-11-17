@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   Plus,
@@ -9,8 +10,10 @@ import {
 } from "lucide-react";
 import { useBreaks } from "../components/providers";
 import { standings } from "../lib/statistics";
-import { format, newest, player, today } from "../lib/domain";
-import { PageHeading, SectionHeading } from "../components/ui";
+import { newest, today } from "../lib/domain";
+import { PageHeading, SectionHeading, Modal } from "../components/ui";
+import { SelectionIndicator } from "../components/SelectionIndicator";
+import { LeagueStandings, MonthWinner } from "../components/LeagueStandings";
 import { BreakList } from "../components/BreakList";
 import { monthLabel, monthRange, monthlyLeagues } from "../lib/monthly";
 export default function League() {
@@ -34,6 +37,15 @@ export default function League() {
   const rows = standings(selected);
   const archived = leagues.filter((league) => league.status === "completed");
   const index = months.indexOf(selectedMonth);
+  const [archiveOrigin, setArchiveOrigin] = useState<HTMLElement | null>(null);
+  const openedArchive = archived.find(
+    (league) => league.month === search.get("arkiv"),
+  );
+  const archiveBreaks = openedArchive
+    ? breaks
+        .filter((rast) => rast.played_on.startsWith(`${openedArchive.month}-`))
+        .sort(newest)
+    : [];
   const selectedRange = monthRange(selectedMonth);
   const completed =
     monthly && selectedMonth < currentMonth && selected.length > 0;
@@ -50,6 +62,7 @@ export default function League() {
       </PageHeading>
       <div className="league-controls">
         <div className="league-mode segmented" role="group" aria-label="Liga">
+          <SelectionIndicator value={monthly ? "month" : "total"} />
           <button
             aria-pressed={!monthly}
             className={!monthly ? "selected" : ""}
@@ -117,84 +130,11 @@ export default function League() {
               : "Alla raster"}
           </span>
         </div>
-        {winners.length > 0 && (
-          <div className="month-winner" role="status">
-            <span className="winner-emblem">
-              <Trophy size={19} />
-            </span>
-            <div>
-              <span>
-                {winners.length > 1 ? "Delad månadsvinst" : "Månadsvinnare"}
-              </span>
-              <strong>{winners.map((row) => row.name).join(" och ")}</strong>
-            </div>
-            <span className="winner-points">
-              {winners[0].points}
-              <small>poäng</small>
-            </span>
-          </div>
-        )}
-        <table className="league-table">
-          <caption className="sr-only">
-            Ligatabell. R: raster, V: vinster, O: oavgjorda, F: förluster, P:
-            poäng, P/R: poäng per rast.
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Spelare</th>
-              {["R", "V", "O", "F", "P", "P/R"].map((h) => (
-                <th scope="col" key={h}>
-                  <abbr
-                    title={
-                      {
-                        R: "Spelade raster",
-                        V: "Vunna raster",
-                        O: "Oavgjorda raster",
-                        F: "Förlorade raster",
-                        P: "Ligapoäng",
-                        "P/R": "Poäng per rast",
-                      }[h]
-                    }
-                  >
-                    {h}
-                  </abbr>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr
-                key={r.id}
-                className={r.rank === 1 && selected.length ? "leader" : ""}
-              >
-                <td className="rank">{r.rank}</td>
-                <th scope="row">
-                  <Link
-                    to={`/statistik/spelare/${r.id}${monthly ? `?period=custom&from=${selectedRange.from}&to=${selectedRange.to}` : ""}`}
-                  >
-                    <span
-                      className="player-dot"
-                      aria-hidden="true"
-                      style={{ background: player(r.id).color }}
-                    >
-                      {r.name[0]}
-                    </span>
-                    {r.name}
-                    <ArrowUpRight size={14} />
-                  </Link>
-                </th>
-                <td>{r.breaks}</td>
-                <td>{r.wins}</td>
-                <td>{r.draws}</td>
-                <td>{r.losses}</td>
-                <td className="points">{r.points}</td>
-                <td>{format(r.ppr)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <MonthWinner winners={winners} />
+        <LeagueStandings
+          rows={rows}
+          range={monthly ? selectedRange : undefined}
+        />
         {monthly && selected.length === 0 && (
           <p className="month-empty">
             Inga raster registrerade i {monthLabel(selectedMonth)}.
@@ -251,9 +191,13 @@ export default function League() {
                 key={league.month}
                 className={`card archive-month ${monthly && selectedMonth === league.month ? "is-selected" : ""}`}
                 aria-label={`Visa ${monthLabel(league.month)}`}
-                onClick={() => {
-                  chooseMonth(league.month);
-                  window.scrollTo({ top: 0, behavior: "instant" });
+                aria-haspopup="dialog"
+                aria-expanded={openedArchive?.month === league.month}
+                onClick={(event) => {
+                  setArchiveOrigin(event.currentTarget);
+                  const next = new URLSearchParams(search);
+                  next.set("arkiv", league.month);
+                  setSearch(next);
                 }}
               >
                 <span className="archive-month-label">
@@ -275,6 +219,46 @@ export default function League() {
             ))}
           </div>
         </section>
+      )}
+      {openedArchive && (
+        <Modal
+          title={monthLabel(openedArchive.month)}
+          className="month-modal"
+          origin={archiveOrigin}
+          onClose={() => {
+            const next = new URLSearchParams(search);
+            next.delete("arkiv");
+            setSearch(next, { replace: true });
+          }}
+        >
+          <div className="month-modal-content">
+            <MonthWinner winners={openedArchive.winners} />
+            <LeagueStandings
+              rows={openedArchive.rows}
+              range={monthRange(openedArchive.month)}
+            />
+            <div className="month-modal-summary">
+              <span>
+                <strong>{openedArchive.breaks}</strong> raster
+              </span>
+              <span>
+                <strong>{openedArchive.matches}</strong> matcher
+              </span>
+              <span>Avslutad månadsliga</span>
+            </div>
+            <p className="table-note">
+              Placering efter poäng, matchskillnad och vunna matcher. Lika
+              värden ger delad plats.
+            </p>
+            <section
+              className="month-modal-history"
+              aria-label="Månadens raster"
+            >
+              <h3>Raster</h3>
+              <BreakList breaks={archiveBreaks} />
+            </section>
+          </div>
+        </Modal>
       )}
     </>
   );

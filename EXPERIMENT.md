@@ -6,7 +6,7 @@ Arbetsgren: `experiment/monthly-glass`. Detta test är inte publicerat till GitH
 
 - Varje kalendermånad har en egen tabell med befintliga 3/1/0-poäng och samma utslagsregler som totaltabellen. Speldatum avgör månaden.
 - Avslutade månader visar månadsvinnare. Fullständigt lika resultat ger delad vinst. Pågående och kommande månader får ingen utsedd vinnare.
-- Arkivet öppnar historiska tabeller. Vald månad finns i adressen och bevaras vid omladdning. Spelarlänkar från en månadstabell öppnar statistik för exakt den kalendermånaden.
+- Arkivet öppnar historiska tabeller i en dialog som växer fram från det tryckta kortet. Bakgrundens månadsval och scrollposition bevaras. Arkivdialogens månad finns i adressen som `arkiv=ÅÅÅÅ-MM` och bevaras vid omladdning. Spelarlänkar från en månadstabell öppnar statistik för exakt den kalendermånaden.
 - Tabeller och vinnare beräknas från befintliga raster. Ändringar av datum eller resultat slår igenom direkt. Ingen databasändring eller lagrad kopia av månadsvinnare behövs.
 
 ## Utseende
@@ -23,8 +23,18 @@ Automatiska tester täcker kalendermånader, årsskifte, skottår, månadsvinnar
 
 Det här testet byter inte poängsystem, autentisering, import eller produktionsdata.
 
-Verifierat: 82 enhetstester, 12 E2E-tester, lint, typecheck och produktionsbygge. Efter att registreringsvyn gjorts kompaktare kördes dess mobiltest igen. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
+Verifierat: 82 enhetstester, 16 E2E-tester, lint, typecheck och produktionsbygge. Arkivtesterna omfattar Escape, bakgrundsklick, delbar adress, omladdning, bibehållen scroll, återställt fokus och minskad rörelse. Även scroll efter stängda redigerings- och borttagningsdialoger kontrolleras. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
 
 Förhandsbilder: [månadsliga på desktop](artifacts/screenshots/monthly-glass-desktop.png), [månadsliga på mobil](artifacts/screenshots/monthly-glass-mobile.png), [registrering på mobil](artifacts/screenshots/monthly-glass-register.png). De tidigare granskningsbilderna visar den publicerade versionen och har behållits för jämförelse.
 
-Darkmode-kontrollen omfattade även [statistik på desktop](artifacts/screenshots/monthly-glass-statistics.png) och navigation utan WebGL-effekt. Alla 12 E2E-fall passerade; inloggningsfallen kördes om efter att testmiljöns försöksräknare nollställts. Spelarkoder och autentiseringsregler ändrades inte.
+Darkmode-kontrollen omfattade även [statistik på desktop](artifacts/screenshots/monthly-glass-statistics.png) och navigation utan WebGL-effekt. Spelarkoder och autentiseringsregler ändrades inte.
+
+## Rörelse
+
+- Knappar trycks ned lätt och fjädrar tillbaka. Arkivkort lyfts vid hover på enheter med mus.
+- Navigation och ligaväljare har en glidande markering. Vybyten, statistikvärden och sparbekräftelser får korta övergångar.
+- Arkivdialogen animeras från kortets verkliga skärmposition och stängs tillbaka till kortet. Dialogen innehåller månadens tabell, vinnare och raster. Scrollen ligger kvar och fokus återgår till kortet.
+- Vanliga dialoger får också mjuk öppning och stängning. Native `dialog` behåller fokusfälla, Escape och bakgrundens inaktiva tillstånd. CSS kopplar scrollåset till faktiska öppna dialoger, även vid nästlade dialoger.
+- Animationerna använder CSS och Web Animations API utan ett extra animationsbibliotek. Minskad rörelse stänger av förflyttningar, knappskalning och dialoganimationer.
+
+Arkivdialogens slutläge: [desktop](artifacts/screenshots/monthly-glass-archive-desktop.png) och [mobil](artifacts/screenshots/monthly-glass-archive-mobile.png).

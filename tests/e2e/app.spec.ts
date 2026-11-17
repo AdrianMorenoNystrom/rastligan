@@ -198,9 +198,30 @@ test("månadsliga, månadsvinnare, tom månad och återgång till totaltabell", 
   await expect(page.locator(".month-winner")).toHaveCount(0);
   await expect(page.locator(".league-table .leader")).toHaveCount(0);
   await expect(page.locator(".league-summary strong").first()).toHaveText("0");
-  await page
-    .getByRole("button", { name: "Visa oktober 2026", exact: true })
-    .click();
+  const archiveCard = page.getByRole("button", {
+    name: "Visa oktober 2026",
+    exact: true,
+  });
+  await archiveCard.scrollIntoViewIfNeeded();
+  const beforeArchive = await page.evaluate(() => scrollY);
+  await archiveCard.click();
+  const archiveDialog = page.getByRole("dialog", {
+    name: "oktober 2026",
+    exact: true,
+  });
+  await expect(archiveDialog).toBeVisible();
+  await expect(archiveDialog.locator(".league-table tbody tr")).toHaveCount(3);
+  await expect(archiveDialog.locator(".month-winner")).toContainText("Elias");
+  await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
+  await page.keyboard.press("Escape");
+  await expect(archiveDialog).toHaveCount(0);
+  await expect(archiveCard).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBeCloseTo(beforeArchive, 0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-11",
+  );
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-10");
   await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
     "2026-10",
   );
@@ -220,6 +241,44 @@ test("månadsliga, månadsvinnare, tom månad och återgång till totaltabell", 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(width);
+  expect(errors).toEqual([]);
+});
+
+test("arkivdialog: delbar adress, bakgrundsklick och minskad rörelse", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-11-17T12:00:00+01:00"));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#/?arkiv=2026-10");
+  const dialog = page.getByRole("dialog", {
+    name: "oktober 2026",
+    exact: true,
+  });
+  await expect(dialog).toBeVisible();
+  expect(
+    await dialog.evaluate((element) => element.getAnimations().length),
+  ).toBe(0);
+  await page.reload();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stäng", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+  const card = page.getByRole("button", {
+    name: "Visa oktober 2026",
+    exact: true,
+  });
+  await card.click();
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(2, 2);
+  await expect(dialog).toHaveCount(0);
+  await expect(card).toBeFocused();
+  await card.click();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
   expect(errors).toEqual([]);
 });
 test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning", async ({
@@ -286,6 +345,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       .getByRole("button", { name: "Spara ändringar", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
     await page.getByLabel("Till datum").fill("2001-02-04");
     await expect(page.locator(".match-score")).toContainText("2:2");
     const edited = (await admin.from("matches").select().eq("id", id).single())
@@ -310,6 +370,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       .getByRole("button", { name: "Ja, ta bort", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
     expect((await admin.rpc("league_snapshot")).data.count).toBe(initialCount);
     id = undefined;
     await page.locator(".editor-button").click();
