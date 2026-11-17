@@ -13,7 +13,8 @@ import {
 import type { BreakSession, DateRange, PlayerId } from "../lib/domain";
 import { standings, summary } from "../lib/statistics";
 import type { Standing } from "../lib/statistics";
-import { easeOut, reducedMotion } from "../lib/motion";
+import { easeOut } from "../lib/motion";
+import { StatisticsNumber, useStatisticsBuild } from "./StatisticsMotion";
 
 const percentage = (value: number | null) =>
   value === null ? "–" : `${format(value, 1)} %`;
@@ -25,25 +26,32 @@ function Ring({
   radius,
   id,
   active,
+  ready,
+  motion,
+  delay,
 }: {
   value: number | null;
   radius: number;
   id: PlayerId;
   active: boolean;
+  ready: boolean;
+  motion: boolean;
+  delay: number;
 }) {
   const ref = useRef<SVGCircleElement>(null);
   const length = 2 * Math.PI * radius;
   const offset = length * (1 - (value ?? 0) / 100);
   const previous = useRef(length);
   useLayoutEffect(() => {
+    if (!ready) return;
     const circle = ref.current!;
-    const animation = !reducedMotion()
+    const animation = motion
       ? circle.animate(
           [
             { strokeDashoffset: String(previous.current) },
             { strokeDashoffset: String(offset) },
           ],
-          { duration: 900, easing: easeOut },
+          { duration: 900, delay, fill: "backwards", easing: easeOut },
         )
       : null;
     previous.current = offset;
@@ -54,7 +62,7 @@ function Ring({
         animation.cancel();
       }
     };
-  }, [offset]);
+  }, [offset, ready, motion, delay]);
   return (
     <g className={`stats-ring ${active ? "is-active" : ""}`} style={tone(id)}>
       <circle className="stats-ring-track" cx="150" cy="150" r={radius} />
@@ -65,7 +73,7 @@ function Ring({
         cy="150"
         r={radius}
         strokeDasharray={`${length} ${length}`}
-        strokeDashoffset={offset}
+        strokeDashoffset={ready ? offset : length}
         transform="rotate(-90 150 150)"
       />
     </g>
@@ -96,28 +104,63 @@ export function StatisticsHero({
   const dates = selected.map((rast) => rast.played_on).sort();
   const from = range.from || dates[0];
   const to = range.to || dates.at(-1);
+  const { ref, ready, motion } = useStatisticsBuild<HTMLElement>();
   return (
-    <section className="card stats-hero" aria-label="Ligan i siffror">
+    <section
+      ref={ref}
+      className="card stats-hero stats-build"
+      data-built={ready || undefined}
+      aria-label="Ligan i siffror"
+    >
       <div className="stats-hero-copy">
         <span className="stats-eyebrow">
           {range.from || range.to ? "Vald period" : "Hela ligan"}
         </span>
         <h2>Ligan i siffror</h2>
         <div className="stats-big-number">
-          <strong>{s.matchesPlayed}</strong>
+          <strong>
+            <StatisticsNumber
+              value={s.matchesPlayed}
+              ready={ready}
+              motion={motion}
+              delay={60}
+            />
+          </strong>
           <span>spelade matcher</span>
         </div>
         <div className="stats-hero-totals">
           <div>
-            <strong>{s.breaks}</strong>
+            <strong>
+              <StatisticsNumber
+                value={s.breaks}
+                ready={ready}
+                motion={motion}
+                delay={120}
+              />
+            </strong>
             <span>raster</span>
           </div>
           <div>
-            <strong>{s.days}</strong>
+            <strong>
+              <StatisticsNumber
+                value={s.days}
+                ready={ready}
+                motion={motion}
+                delay={170}
+              />
+            </strong>
             <span>speldagar</span>
           </div>
           <div>
-            <strong>{format(s.matchesPerBreak)}</strong>
+            <strong>
+              <StatisticsNumber
+                value={s.matchesPerBreak}
+                digits={2}
+                ready={ready}
+                motion={motion}
+                delay={220}
+              />
+            </strong>
             <span>matcher / rast</span>
           </div>
         </div>
@@ -171,6 +214,9 @@ export function StatisticsHero({
                         : row.breakWinPercent
                     }
                     active={p.id === active.id}
+                    ready={ready}
+                    motion={motion}
+                    delay={80 + index * 55}
                   />
                 );
               })}
@@ -182,7 +228,16 @@ export function StatisticsHero({
               aria-atomic="true"
             >
               <span>{active.name}</span>
-              <strong>{percentage(rate)}</strong>
+              <strong>
+                <StatisticsNumber
+                  value={rate}
+                  digits={1}
+                  suffix=" %"
+                  ready={ready}
+                  motion={motion}
+                  delay={120}
+                />
+              </strong>
               <small>
                 {played
                   ? `${won} av ${played} ${metric === "matches" ? "matcher" : "raster"} vunna`
@@ -194,7 +249,7 @@ export function StatisticsHero({
             className="stats-ring-legend"
             aria-label="Välj spelare i ringdiagrammet"
           >
-            {PLAYERS.map((p) => {
+            {PLAYERS.map((p, index) => {
               const row = rows.find((row) => row.id === p.id)!;
               return (
                 <button
@@ -206,11 +261,18 @@ export function StatisticsHero({
                   <i />
                   <span>{p.name}</span>
                   <strong>
-                    {percentage(
-                      metric === "matches"
-                        ? row.matchWinPercent
-                        : row.breakWinPercent,
-                    )}
+                    <StatisticsNumber
+                      value={
+                        metric === "matches"
+                          ? row.matchWinPercent
+                          : row.breakWinPercent
+                      }
+                      digits={1}
+                      suffix=" %"
+                      ready={ready}
+                      motion={motion}
+                      delay={80 + index * 55}
+                    />
                   </strong>
                 </button>
               );
@@ -223,56 +285,81 @@ export function StatisticsHero({
 }
 
 export function PlayerSnapshots({ selected }: { selected: BreakSession[] }) {
-  const [search] = useSearchParams();
   const rows = standings(selected);
   return (
     <section
       className="stats-player-grid"
       aria-label="Spelarnas resultat i urvalet"
     >
-      {rows.map((row) => (
-        <Link
-          key={row.id}
-          to={profilePath(row.id, search)}
-          className="card stats-player-card"
-          style={tone(row.id)}
-        >
-          <div className="stats-player-top">
-            <span className="stats-player-avatar" aria-hidden="true">
-              {row.name[0]}
-            </span>
-            <h3>{row.name}</h3>
-            <span className="stats-player-rank">
-              {row.breaks > 0 ? `#${row.rank}` : "–"}
-            </span>
-            <ArrowUpRight size={16} />
-          </div>
-          <div className="stats-player-numbers">
-            <div>
-              <strong>{row.points}</strong>
-              <span>poäng</span>
-            </div>
-            <div>
-              <strong>{format(row.ppr)}</strong>
-              <span>P/R</span>
-            </div>
-          </div>
-          <OutcomeBar row={row} />
-          <div className="stats-player-outcomes">
-            <span>
-              <b>{row.wins}</b> <abbr title="Vunna raster">V</abbr>
-            </span>
-            <span>
-              <b>{row.draws}</b> <abbr title="Oavgjorda raster">O</abbr>
-            </span>
-            <span>
-              <b>{row.losses}</b> <abbr title="Förlorade raster">F</abbr>
-            </span>
-            <small>{row.breaks} raster</small>
-          </div>
-        </Link>
+      {rows.map((row, index) => (
+        <PlayerSnapshot key={row.id} row={row} index={index} />
       ))}
     </section>
+  );
+}
+
+function PlayerSnapshot({ row, index }: { row: Standing; index: number }) {
+  const [search] = useSearchParams();
+  const { ref, ready, motion } = useStatisticsBuild<HTMLAnchorElement>();
+  return (
+    <Link
+      ref={ref}
+      data-built={ready || undefined}
+      to={profilePath(row.id, search)}
+      className="card stats-player-card stats-build"
+      style={
+        { ...tone(row.id), "--stats-delay": `${index * 65}ms` } as CSSProperties
+      }
+    >
+      <div className="stats-player-top">
+        <span className="stats-player-avatar" aria-hidden="true">
+          {row.name[0]}
+        </span>
+        <h3>{row.name}</h3>
+        <span className="stats-player-rank">
+          {row.breaks > 0 ? `#${row.rank}` : "–"}
+        </span>
+        <ArrowUpRight size={16} />
+      </div>
+      <div className="stats-player-numbers">
+        <div>
+          <strong>
+            <StatisticsNumber
+              value={row.points}
+              ready={ready}
+              motion={motion}
+              delay={index * 65}
+            />
+          </strong>
+          <span>poäng</span>
+        </div>
+        <div>
+          <strong>
+            <StatisticsNumber
+              value={row.ppr}
+              digits={2}
+              ready={ready}
+              motion={motion}
+              delay={index * 65 + 60}
+            />
+          </strong>
+          <span>P/R</span>
+        </div>
+      </div>
+      <OutcomeBar row={row} />
+      <div className="stats-player-outcomes">
+        <span>
+          <b>{row.wins}</b> <abbr title="Vunna raster">V</abbr>
+        </span>
+        <span>
+          <b>{row.draws}</b> <abbr title="Oavgjorda raster">O</abbr>
+        </span>
+        <span>
+          <b>{row.losses}</b> <abbr title="Förlorade raster">F</abbr>
+        </span>
+        <small>{row.breaks} raster</small>
+      </div>
+    </Link>
   );
 }
 
@@ -313,8 +400,14 @@ export function DuelSnapshot({ selected }: { selected: BreakSession[] }) {
   const left = rows.find((row) => row.id === a)!;
   const right = rows.find((row) => row.id === b)!;
   const total = left.matchesWon + right.matchesWon;
+  const { ref, ready, motion } = useStatisticsBuild<HTMLElement>();
   return (
-    <section className="card stats-duel-preview" aria-label="Duellöversikt">
+    <section
+      ref={ref}
+      data-built={ready || undefined}
+      className="card stats-duel-preview stats-build"
+      aria-label="Duellöversikt"
+    >
       <div className="stats-panel-heading">
         <div>
           <span className="stats-eyebrow">Inbördes möten</span>
@@ -339,12 +432,25 @@ export function DuelSnapshot({ selected }: { selected: BreakSession[] }) {
       <div className="stats-duel-score">
         <div style={tone(a)}>
           <span>{player(a).name}</span>
-          <strong>{left.matchesWon}</strong>
+          <strong>
+            <StatisticsNumber
+              value={left.matchesWon}
+              ready={ready}
+              motion={motion}
+            />
+          </strong>
         </div>
         <span>:</span>
         <div style={tone(b)}>
           <span>{player(b).name}</span>
-          <strong>{right.matchesWon}</strong>
+          <strong>
+            <StatisticsNumber
+              value={right.matchesWon}
+              ready={ready}
+              motion={motion}
+              delay={65}
+            />
+          </strong>
         </div>
       </div>
       <p className="stats-duel-score-label">Vunna individuella matcher</p>

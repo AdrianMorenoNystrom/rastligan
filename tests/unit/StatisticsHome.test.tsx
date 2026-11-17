@@ -21,7 +21,11 @@ const rast = (id: string, a: number, b: number): BreakSession => ({
 const example = [rast("a", 4, 1), rast("b", 2, 3)];
 
 beforeEach(() => {
-  vi.stubGlobal("matchMedia", () => ({ matches: true }));
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
 });
 afterEach(() => vi.unstubAllGlobals());
 

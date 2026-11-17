@@ -18,6 +18,7 @@ import { PLAYERS, dateLabel, format } from "../lib/domain";
 import type { PlayerId } from "../lib/domain";
 import type { ChartRow } from "../lib/statistics";
 import { Empty } from "./ui";
+import { useStatisticsBuild } from "./StatisticsMotion";
 interface Props {
   title: string;
   description?: string;
@@ -32,6 +33,7 @@ interface Props {
   step?: boolean;
   height?: number;
   filled?: boolean;
+  build?: boolean;
 }
 export default function ChartCard({
   title,
@@ -47,7 +49,10 @@ export default function ChartCard({
   step = false,
   height = 240,
   filled = false,
+  build = false,
 }: Props) {
+  const { ref, ready, motion } = useStatisticsBuild<HTMLElement>(build);
+  const animate = build && ready && motion;
   const [hidden, setHidden] = useState<PlayerId[]>([]);
   const activityLabel = activityMetric === "breaks" ? "Raster" : "Matcher";
   const activityKey = activityMetric === "breaks" ? "count" : "matchesPlayed";
@@ -140,7 +145,12 @@ export default function ChartCard({
     </>
   );
   return (
-    <section className="card chart-card" aria-labelledby={id}>
+    <section
+      ref={ref}
+      className={`card chart-card${build ? " stats-build stats-chart-build" : ""}`}
+      data-built={ready || undefined}
+      aria-labelledby={id}
+    >
       <div className="chart-heading">
         <div>
           <h2 id={id}>{title}</h2>
@@ -173,7 +183,12 @@ export default function ChartCard({
       ) : (
         <>
           <div className="chart-container" style={{ height }}>
-            <ResponsiveContainer width="100%" height={height} minWidth={0}>
+            <ResponsiveContainer
+              key={ready ? "ready" : "waiting"}
+              width="100%"
+              height={height}
+              minWidth={0}
+            >
               {activity ? (
                 <BarChart
                   data={chartData}
@@ -187,7 +202,9 @@ export default function ChartCard({
                     fill="var(--accent)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={40}
-                    isAnimationActive={false}
+                    isAnimationActive={animate}
+                    animationDuration={760}
+                    animationEasing="ease-out"
                   />
                 </BarChart>
               ) : (
@@ -240,7 +257,7 @@ export default function ChartCard({
                     ))}
                   {PLAYERS.filter(
                     (p) => players.includes(p.id) && !hidden.includes(p.id),
-                  ).map((p) => (
+                  ).map((p, index) => (
                     <Line
                       key={p.id}
                       dataKey={p.id}
@@ -251,7 +268,10 @@ export default function ChartCard({
                       activeDot={{ r: 5 }}
                       connectNulls={false}
                       type={step ? "stepAfter" : "linear"}
-                      isAnimationActive={false}
+                      isAnimationActive={animate}
+                      animationBegin={index * 60}
+                      animationDuration={900}
+                      animationEasing="ease-out"
                     />
                   ))}
                 </TrendChart>

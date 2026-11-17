@@ -259,7 +259,9 @@ test("statistikhem: ringdiagram, rätt nämnare, duellval och ärvda datumfilter
     exact: true,
   });
   await expect(hero).toBeVisible();
-  await expect(hero.locator(".stats-big-number strong")).toHaveText("27");
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
   await expect(hero.locator(".stats-hero-totals > div").first()).toContainText(
     "7",
   );
@@ -284,6 +286,7 @@ test("statistikhem: ringdiagram, rätt nämnare, duellval och ärvda datumfilter
   );
   await page.goBack();
   const duel = page.getByRole("region", { name: "Duellöversikt" });
+  await duel.scrollIntoViewIfNeeded();
   await duel.getByLabel("Spelarpar i översikten").selectOption("dave-elias");
   await expect(duel.getByLabel("Dave 4, Elias 4 matchvinster")).toBeVisible();
   await expect(duel).toContainText("2 oavgjorda");
@@ -293,12 +296,54 @@ test("statistikhem: ringdiagram, rätt nämnare, duellval och ärvda datumfilter
     "2026-10-22",
   );
   await page.goto("/#/statistik?period=custom&from=2027-01-01&to=2027-01-31");
-  await expect(hero.locator(".stats-big-number strong")).toHaveText("0");
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("0");
   await expect(hero.getByRole("status")).toContainText("Inget underlag");
   await expect(page.locator("main")).not.toContainText(/NaN|Infinity/);
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(page.viewportSize()!.width);
+  expect(errors).toEqual([]);
+});
+
+test("statistikens uppbyggnad följer scroll och minskad rörelse", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#/statistik?period=custom&from=2026-10-22&to=2026-10-26");
+  const hero = page.getByRole("region", {
+    name: "Ligan i siffror",
+    exact: true,
+  });
+  await expect(hero).toHaveAttribute("data-built", "true");
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
+  const lastChart = page.locator(".stats-chart-build").last();
+  await expect(lastChart).not.toHaveAttribute("data-built");
+  await lastChart.scrollIntoViewIfNeeded();
+  await expect(lastChart).toHaveAttribute("data-built", "true");
+  await expect(
+    lastChart.locator(".recharts-line-dots .recharts-dot").first(),
+  ).toBeVisible();
+  await hero.scrollIntoViewIfNeeded();
+  await expect(lastChart).toHaveAttribute("data-built", "true");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
+  await expect(page.locator(".stats-build:not([data-built])")).toHaveCount(0);
+  expect(
+    await hero
+      .locator(".stats-ring-value")
+      .evaluateAll(
+        (circles) => circles.flatMap((circle) => circle.getAnimations()).length,
+      ),
+  ).toBe(0);
   expect(errors).toEqual([]);
 });
 

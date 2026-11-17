@@ -1,3 +1,88 @@
+.stats-count {
+  display: inline-grid;
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+}
+.stats-count::before {
+  content: attr(data-display);
+  visibility: hidden;
+  grid-area: 1 / 1;
+}
+.stats-count-visual {
+  grid-area: 1 / 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stats-build:not([data-built]) .stats-outcome-bar,
+  .stats-build:not([data-built]) .stats-duel-balance {
+    transform: scaleX(0);
+  }
+  .stats-build .stats-outcome-bar,
+  .stats-build .stats-duel-balance {
+    transform-origin: left center;
+  }
+  .stats-build[data-built] .stats-outcome-bar,
+  .stats-build[data-built] .stats-duel-balance {
+    animation: stats-fill 760ms var(--stats-delay, 100ms) var(--ease-spring)
+      both;
+  }
+  .stats-build[data-built] .stats-player-numbers,
+  .stats-build[data-built] .stats-duel-score {
+    animation: stats-settle 550ms var(--stats-delay, 0ms) var(--ease-spring)
+      both;
+  }
+  .stats-chart-build:not([data-built]) .recharts-line,
+  .stats-chart-build:not([data-built]) .recharts-area,
+  .stats-chart-build:not([data-built]) .recharts-bar {
+    opacity: 0;
+  }
+  .stats-chart-build[data-built] .recharts-area {
+    animation: stats-shade 800ms 160ms ease-out both;
+  }
+  .activity-calendar.stats-build:not([data-built]) .active-day {
+    opacity: 0.35;
+  }
+  .activity-calendar.stats-build[data-built] .active-day {
+    animation: stats-day 500ms var(--ease-spring) both;
+  }
+}
+@keyframes stats-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes stats-settle {
+  from {
+    opacity: 0.3;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes stats-shade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes stats-day {
+  from {
+    opacity: 0.35;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 .stats-section-tabs {
   position: relative;
   isolation: isolate;
@@ -104,7 +189,7 @@
   font-weight: 560;
   color: #d1e2cb;
 }
-.stats-hero-totals span {
+.stats-hero-totals > div > span {
   font-size: 10px;
   color: #a3b2a8;
 }
@@ -249,7 +334,7 @@
   border-radius: 50%;
   background: var(--player-color);
 }
-.stats-ring-legend span {
+.stats-ring-legend button > span {
   color: #b8c7ba;
   font-size: 11px;
 }
@@ -341,7 +426,7 @@
   color: #d5e3d5;
   letter-spacing: -0.5px;
 }
-.stats-player-numbers span {
+.stats-player-numbers > div > span {
   color: #99ac9e;
   font-size: 10px;
 }
@@ -542,7 +627,7 @@
   .stats-player-numbers strong {
     font-size: 29px;
   }
-  .stats-player-numbers span {
+  .stats-player-numbers > div > span {
     font-size: 9px;
   }
   .stats-performance-grid {
@@ -676,7 +761,7 @@
   .stats-ring-legend button {
     padding: 8px;
   }
-  .stats-ring-legend span {
+  .stats-ring-legend button > span {
     font-size: 10px;
   }
   .stats-ring-legend strong {

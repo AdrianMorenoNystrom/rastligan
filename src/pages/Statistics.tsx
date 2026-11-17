@@ -9,6 +9,7 @@ import {
   DuelSnapshot,
 } from "../components/StatisticsHome";
 import { SelectionIndicator } from "../components/SelectionIndicator";
+import { useStatisticsBuild } from "../components/StatisticsMotion";
 import {
   PLAYERS,
   PAIRS,
@@ -159,6 +160,7 @@ function Overview({
             max={3}
             height={290}
             filled
+            build
           />
           <DuelSnapshot selected={selected} />
         </div>
@@ -170,6 +172,7 @@ function Overview({
             description={`${activityMetric === "breaks" ? "Raster" : "Individuella matcher"} per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
             data={performance(all, range, res)}
             activity
+            build
             activityMetric={activityMetric}
             controls={
               <label className="activity-selector">
@@ -192,6 +195,7 @@ function Overview({
             description="Totalpoäng vid dagens slut, inklusive poäng före vald period."
             data={cumulative(all, range)}
             step
+            build
             unit="poäng"
           />
         </div>
@@ -201,6 +205,7 @@ function Overview({
   );
 }
 function ActivityCalendar({ breaks }: { breaks: BreakSession[] }) {
+  const { ref, ready } = useStatisticsBuild<HTMLElement>();
   const dates = breaks.map((m) => m.played_on).sort();
   const [start, setStart] = useState("");
   const month = start || dates.at(-1)?.slice(0, 7) || today().slice(0, 7);
@@ -214,7 +219,11 @@ function ActivityCalendar({ breaks }: { breaks: BreakSession[] }) {
   );
   const [chosen, setChosen] = useState("");
   return (
-    <section className="card activity-calendar">
+    <section
+      ref={ref}
+      data-built={ready || undefined}
+      className="card activity-calendar stats-build"
+    >
       <div className="section-heading">
         <div>
           <h2>Speldagar</h2>
@@ -252,6 +261,7 @@ function ActivityCalendar({ breaks }: { breaks: BreakSession[] }) {
                 n
                   ? {
                       background: `rgb(71 145 66 / ${Math.min(0.85, 0.18 + n * 0.1)})`,
+                      animationDelay: `${i * 12}ms`,
                     }
                   : undefined
               }

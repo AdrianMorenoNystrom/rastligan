@@ -23,7 +23,7 @@ Automatiska tester täcker kalendermånader, årsskifte, skottår, månadsvinnar
 
 Det här testet byter inte poängsystem, autentisering, import eller produktionsdata.
 
-Verifierat: 86 enhetstester, 20 E2E-tester, lint, typecheck och produktionsbygge. Arkivtesterna omfattar Escape, bakgrundsklick, delbar adress, omladdning, bibehållen scroll, återställt fokus och minskad rörelse. Även scroll efter stängda redigerings- och borttagningsdialoger kontrolleras. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
+Verifierat: 89 enhetstester, 24 E2E-tester, lint, typecheck och produktionsbygge. Arkivtesterna omfattar Escape, bakgrundsklick, delbar adress, omladdning, bibehållen scroll, återställt fokus och minskad rörelse. Även scroll efter stängda redigerings- och borttagningsdialoger kontrolleras. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
 
 Förhandsbilder: [månadsliga på desktop](artifacts/screenshots/monthly-glass-desktop.png), [månadsliga på mobil](artifacts/screenshots/monthly-glass-mobile.png), [registrering på mobil](artifacts/screenshots/monthly-glass-register.png). De tidigare granskningsbilderna visar den publicerade versionen och har behållits för jämförelse.
 
@@ -48,5 +48,7 @@ Arkivdialogens slutläge: [desktop](artifacts/screenshots/monthly-glass-archive-
 - Duellpanelen kan växla mellan alla tre spelarpar. Den skiljer på individuella matchvinster och rastvinster och länkar till duellen inom samma period.
 - Befintliga diagram för P/R, aktivitet och sammanlagda ligapoäng finns kvar, liksom speldagskalendern och flikarna Spelare, Dueller och Rekord. P/R-diagrammet har diskreta färgfält under linjerna. Luckor och verkliga mätvärden bevaras.
 - Sammanfattningen kan visas medan diagramkoden laddas. Layouten anpassas för mobil och ringanimationerna följer inställningen för minskad rörelse.
+- När översikten öppnas räknas siffrorna upp, ringarna ritas och resultatstaplarna fylls i en kort följd. Diagrammens kurvor ritas fram och kalenderns speldagar tonas in. Varje del börjar när den kommer in i bild och spelas en gång per besök, utan att upprepas vid scroll fram och tillbaka. Uppbyggnaden tar ungefär en sekund; filter- och spelarbyten uppdaterar siffrorna med en kortare övergång.
+- Siffrorna behåller sin bredd under uppbyggnaden. Skärmläsare får slutvärdena direkt. Minskad rörelse visar alla värden och diagram utan animation. Avbrutna övergångar städas bort vid filterbyte eller när vyn lämnas.
 
-Tester kontrollerar skilda nämnare för match- och rastvinstprocent, tomt urval, ärvda datumfilter, byte av duell och att diagrammets tooltip visar ett värde per spelare. Mobil och desktop har även granskats visuellt: [desktop](artifacts/screenshots/statistics-home-desktop.png), [mobil](artifacts/screenshots/statistics-home-mobile.png).
+Tester kontrollerar skilda nämnare för match- och rastvinstprocent, tomt urval, ärvda datumfilter, byte av duell och att diagrammets tooltip visar ett värde per spelare. Animationstesterna kontrollerar scrollstart, minskad rörelse, avbruten uppräkning och att skärmläsarens värde finns direkt. Mobil och desktop har även granskats visuellt: [desktop](artifacts/screenshots/statistics-home-desktop.png), [mobil](artifacts/screenshots/statistics-home-mobile.png).
