@@ -1,8 +1,8 @@
 /* Local material experiment. Table geometry and functional layouts stay in styles.css. */
 body {
   background:
-    radial-gradient(ellipse at 8% 4%, #dcebd7aa, transparent 48%),
-    radial-gradient(ellipse at 96% 35%, #dce9f0a3, transparent 48%), #f3f6f2;
+    radial-gradient(ellipse at 8% 4%, #263c2a55, transparent 48%),
+    radial-gradient(ellipse at 96% 35%, #24344540, transparent 48%), #0d1210;
   background-attachment: fixed;
 }
 button,
@@ -23,7 +23,7 @@ h2 {
   font-weight: 630;
 }
 .app-header {
-  background: #f4f7f180;
+  background: #0c110f9c;
   border: 0;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -36,20 +36,20 @@ h2 {
   font-weight: 740;
 }
 .brand-mark > span {
-  background: #b8ed86;
-  box-shadow: inset 0 1px 2px #ffffffcf;
+  background: #bddf94;
+  box-shadow: inset 0 1px 2px #ffffff36;
 }
 .brand-mark:after {
-  background: #789580;
+  background: #799181;
 }
 .desktop-nav,
 .mobile-nav {
   isolation: isolate;
-  background: #ffffff91;
-  border: 1px solid #fffffff5;
+  background: #20302799;
+  border: 1px solid #ffffff1a;
   box-shadow:
-    0 7px 24px #2f51340c,
-    inset 0 1px 0 #ffffff;
+    0 7px 24px #00000030,
+    inset 0 1px 0 #ffffff12;
   backdrop-filter: blur(22px) saturate(1.3);
   -webkit-backdrop-filter: blur(22px) saturate(1.3);
 }
@@ -67,14 +67,14 @@ h2 {
   font-weight: 550;
 }
 .desktop-nav a.active {
-  background: #ffffffd9;
-  color: #235c3b;
+  background: #ffffff10;
+  color: #d6ebc2;
   box-shadow:
-    0 2px 7px #24482c12,
-    inset 0 1px 0 #fff;
+    0 2px 7px #0000001f,
+    inset 0 1px 0 #ffffff16;
 }
 .desktop-nav a:hover {
-  background: #ffffff9c;
+  background: #ffffff0a;
 }
 .glass-material {
   position: absolute;
@@ -100,11 +100,11 @@ h2 {
 }
 .editor-button {
   border-radius: 23px;
-  background: #ffffff70;
-  border-color: #ffffffed;
-  color: #54675d;
+  background: #ffffff04;
+  border-color: #1d2822ed;
+  color: #a7b9ad;
   padding: 0 16px;
-  box-shadow: 0 2px 10px #35523c06;
+  box-shadow: 0 2px 10px #0000001a;
 }
 .main-content {
   padding-top: 35px;
@@ -121,13 +121,13 @@ h2 {
 }
 .card,
 .metric {
-  background: linear-gradient(145deg, #ffffffed, #ffffffb5);
-  border-color: #ffffff;
+  background: linear-gradient(145deg, #1d2822ed, #141e18ed);
+  border-color: #ffffff12;
   border-radius: 23px;
   box-shadow:
-    0 6px 30px #2c513309,
-    0 1px 2px #18382106,
-    inset 0 1px 0 #ffffff;
+    0 6px 30px #00000024,
+    0 1px 2px #00000020,
+    inset 0 1px 0 #ffffff12;
 }
 .card {
   margin-bottom: 22px;
@@ -139,14 +139,14 @@ h2 {
   padding: 24px 27px 23px;
 }
 .league-table thead {
-  background: #edf2ed80;
-  color: #6b7d70;
+  background: #07100a38;
+  color: #99ac9f;
 }
 .league-table tbody tr + tr {
-  border-color: #dfe8dfb8;
+  border-color: #ffffff0e;
 }
 .league-table tbody td {
-  color: #34483c;
+  color: #cbd7ce;
 }
 .league-table tbody th a {
   font-weight: 580;
@@ -159,22 +159,22 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #142017;
   font-size: 12px;
   font-weight: 550;
 }
 .league-table .leader {
-  background: linear-gradient(100deg, #e4f3dca8, #ecf6e8b8);
+  background: linear-gradient(100deg, #a8d47e0d, #a8d47e05);
 }
 .league-table .points {
   font-size: 23px;
   font-weight: 690;
 }
 .league-table .leader .points {
-  color: #347329;
+  color: #c0e49b;
 }
 .table-note {
-  border-top-color: #dde7dda1;
+  border-top-color: #ffffff0d;
   padding: 17px 27px;
   font-size: 10px;
   line-height: 1.6;
@@ -182,8 +182,8 @@ h2 {
 .tag {
   border: 0;
   border-radius: 20px;
-  background: #e7efdf;
-  color: #4c6741;
+  background: #b5d98b0f;
+  color: #c4dbb2;
   padding: 5px 10px;
   font-weight: 550;
 }
@@ -198,8 +198,8 @@ h2 {
 .league-mode {
   width: 270px;
   border-radius: 26px;
-  background: #e3ebe1c2;
-  border-color: #d6e0d64a;
+  background: #080f0bc2;
+  border-color: #ffffff0a;
 }
 .league-mode button {
   min-height: 40px;
@@ -207,17 +207,17 @@ h2 {
   font-size: 13px;
 }
 .league-mode .selected {
-  background: #fffffff2;
-  color: #2a4f30;
+  background: #ffffff0d;
+  color: #def0cc;
   box-shadow:
-    0 2px 8px #27452b10,
-    inset 0 1px 0 #ffffff;
+    0 2px 8px #00000029,
+    inset 0 1px 0 #ffffff12;
 }
 .month-picker {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #59705e;
+  color: #a5b7a9;
 }
 .month-picker select {
   width: 185px;
@@ -238,7 +238,7 @@ h2 {
 }
 .eyebrow {
   display: block;
-  color: #74846f;
+  color: #a9ba9f;
   font-size: 10px;
   margin-bottom: 6px;
   font-weight: 550;
@@ -252,8 +252,8 @@ h2 {
   padding: 15px 25px;
   margin: 0 16px 16px;
   border-radius: 16px;
-  background: linear-gradient(110deg, #e8f3da, #f1f6eb);
-  color: #3b692d;
+  background: linear-gradient(110deg, #a6ce7812, #a6ce7806);
+  color: #cbe5ae;
 }
 .winner-emblem {
   height: 39px;
@@ -262,13 +262,13 @@ h2 {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #ffffffa1;
+  background: #b6db8c12;
 }
 .month-winner > div > span {
   display: block;
   font-size: 10px;
   margin-bottom: 3px;
-  color: #647958;
+  color: #a5bb93;
 }
 .month-winner strong {
   font-size: 16px;
@@ -289,7 +289,7 @@ h2 {
   color: var(--muted);
   padding: 18px;
   font-size: 12px;
-  background: #f5f8f2;
+  background: #101c14;
 }
 .register-cta {
   border-radius: 18px;
@@ -297,31 +297,31 @@ h2 {
   font-size: 14px;
   font-weight: 650;
   padding: 16px 24px;
-  background: linear-gradient(120deg, #c3ed91, #d2f2ad);
-  border: 1px solid #ffffff91;
+  background: linear-gradient(120deg, #b9dc8e, #cce6a9);
+  border: 1px solid #20302799;
   box-shadow:
-    0 4px 15px #80ad5010,
-    inset 0 1px 0 #ffffff96;
+    0 4px 15px #00000033,
+    inset 0 1px 0 #ffffff40;
   margin-bottom: 23px;
 }
 .register-cta:hover {
-  box-shadow: 0 7px 20px #648f3d24;
+  box-shadow: 0 7px 20px #a6d57220;
 }
 .recent-card {
   padding: 24px 27px 12px;
 }
 .match-row + .match-row {
-  border-color: #dfe8dfb8;
+  border-color: #ffffff0e;
 }
 .match-score .winner {
-  color: #38742b;
+  color: #bddf94;
 }
 .league-summary {
   margin: 24px 8px 30px;
 }
 .league-summary strong {
   font-weight: 600;
-  color: #344e36;
+  color: #d1e5c5;
 }
 .month-archive {
   margin-top: 36px;
@@ -335,7 +335,7 @@ h2 {
   font-size: 17px;
 }
 .archive-count {
-  color: #74836f;
+  color: #a3b2a8;
   font-size: 11px;
 }
 .month-archive-grid {
@@ -351,11 +351,11 @@ h2 {
   color: var(--text);
 }
 .archive-month:hover {
-  box-shadow: 0 10px 30px #2c513318;
-  background: #fff;
+  box-shadow: 0 10px 30px #00000038;
+  background: #ffffff16;
 }
 .archive-month.is-selected {
-  border-color: #9bbc8b;
+  border-color: #a6ca7838;
 }
 .archive-month-label {
   display: flex;
@@ -375,7 +375,7 @@ h2 {
   margin: 23px 0 9px;
 }
 .archive-winner svg {
-  color: #73a34d;
+  color: #b4d48f;
 }
 .archive-winner strong {
   font-size: 21px;
@@ -403,20 +403,20 @@ select,
   border-radius: 20px;
 }
 .segmented .selected {
-  background: #ffffffed;
-  color: #35633b;
+  background: #1d2822ed;
+  color: #d1e8bf;
 }
 .modal {
   border-radius: 28px;
-  background: #f8fbf6ed;
+  background: #18221dee;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   box-shadow:
-    0 30px 100px #1f3e2a2e,
-    inset 0 1px 0 #ffffff;
+    0 30px 100px #00000066,
+    inset 0 1px 0 #ffffff12;
 }
 .modal::backdrop {
-  background: #1d302b40;
+  background: #020704ad;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -432,22 +432,22 @@ select,
   border-radius: 20px;
 }
 .period-options .selected {
-  background: #e3efd9;
+  background: #acd28514;
 }
 .player-selector a,
 .duel-selector a {
   border-radius: 17px;
 }
 .chart-tooltip {
-  background: #fffffff2;
-  border-color: #ffffff;
+  background: #19231ff5;
+  border-color: #ffffff12;
   border-radius: 16px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: var(--text);
 }
 .calendar-grid button.active-day {
-  color: #173c1f;
+  color: #e9f4e4;
 }
 @media (max-width: 900px) {
   .desktop-nav a {
@@ -462,7 +462,7 @@ select,
     font-size: 32px;
   }
   .app-header {
-    background: #f3f6f280;
+    background: #0c110f9c;
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
   }
@@ -567,24 +567,24 @@ select,
     left: 16px;
     right: 16px;
     bottom: calc(12px + env(safe-area-inset-bottom));
-    border: 1px solid #ffffffed;
+    border: 1px solid #1d2822ed;
     border-radius: 32px;
     padding: 5px;
     box-shadow:
-      0 10px 30px #2c513324,
-      inset 0 1px 0 #ffffff;
+      0 10px 30px #00000055,
+      inset 0 1px 0 #ffffff12;
   }
   .mobile-nav a {
     position: relative;
     min-height: 58px;
     border-radius: 26px;
     gap: 4px;
-    color: #63746b;
+    color: #a5b6aa;
   }
   .mobile-nav a.active {
-    background: #ffffffdb;
-    color: #2f673c;
-    box-shadow: 0 2px 8px #27452b12;
+    background: #ffffff0f;
+    color: #d2e8bc;
+    box-shadow: 0 2px 8px #00000026;
   }
   .mobile-nav a.active::before {
     display: none;
@@ -597,7 +597,7 @@ select,
   .desktop-nav,
   .mobile-nav,
   .modal {
-    background: #f8fbf6;
+    background: #19231e;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

@@ -28,12 +28,12 @@ export function GlassMaterial({ mobile = false }: { mobile?: boolean }) {
       if (!ctx) return;
       ctx.scale(2, 2);
       const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, "#e5f2ea");
-      gradient.addColorStop(0.46, "#f8faf8");
-      gradient.addColorStop(1, "#e5edf5");
+      gradient.addColorStop(0, "#192c22");
+      gradient.addColorStop(0.46, "#202c27");
+      gradient.addColorStop(1, "#1e2c35");
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.fillStyle = "rgba(204,229,215,0.075)";
       ctx.beginPath();
       ctx.ellipse(
         width * 0.5,

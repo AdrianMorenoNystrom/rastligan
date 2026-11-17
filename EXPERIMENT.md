@@ -11,7 +11,7 @@ Arbetsgren: `experiment/monthly-glass`. Detta test är inte publicerat till GitH
 
 ## Utseende
 
-Ljus bakgrund, systemtypsnitt, rundade kort, tydligare spelarfärger och en flytande mobilnavigation. Färg- och materialanpassningen omfattar även formulär, dialoger, statistik och diagram.
+Mörk bakgrund, mörka glaspaneler, systemtypsnitt, rundade kort, mjuk grön accent och en flytande mobilnavigation. Spelarfärgerna är ljusare för att vara tydliga mot mörka diagram. Färg- och materialanpassningen omfattar även formulär, dialoger, felmeddelanden, statistik och diagram. Även navigationens WebGL-scen och webbläsarens inbyggda datumkontroller använder det mörka temat.
 
 Navigationens dekorativa material använder [ybouane/liquidglass](https://github.com/ybouane/liquidglass), npm-version 1.0.3 (MIT). Biblioteket läses in separat och får en liten, isolerad scen med en färggradient; tabeller, formulär och inloggningsuppgifter ingår inte i scenen. Enbart den synliga navigationen får en WebGL-instans. Den städas bort när visningsläget ändras eller komponenten tas bort.
 
@@ -26,3 +26,5 @@ Det här testet byter inte poängsystem, autentisering, import eller produktions
 Verifierat: 82 enhetstester, 12 E2E-tester, lint, typecheck och produktionsbygge. Efter att registreringsvyn gjorts kompaktare kördes dess mobiltest igen. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
 
 Förhandsbilder: [månadsliga på desktop](artifacts/screenshots/monthly-glass-desktop.png), [månadsliga på mobil](artifacts/screenshots/monthly-glass-mobile.png), [registrering på mobil](artifacts/screenshots/monthly-glass-register.png). De tidigare granskningsbilderna visar den publicerade versionen och har behållits för jämförelse.
+
+Darkmode-kontrollen omfattade även [statistik på desktop](artifacts/screenshots/monthly-glass-statistics.png) och navigation utan WebGL-effekt. Alla 12 E2E-fall passerade; inloggningsfallen kördes om efter att testmiljöns försöksräknare nollställts. Spelarkoder och autentiseringsregler ändrades inte.
