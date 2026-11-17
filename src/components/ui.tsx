@@ -1,40 +1,96 @@
-import { useEffect, useRef, useId } from "react";
+import { useLayoutEffect, useRef, useId } from "react";
 import type { ReactNode } from "react";
 import { X, Inbox, AlertCircle, RotateCw, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useBreaks } from "./providers";
+import { dialogFrames, easeOut, reducedMotion } from "../lib/motion";
 export function Modal({
   title,
   onClose,
   children,
+  origin,
+  className = "",
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  origin?: HTMLElement | null;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const headingId = useId();
-  useEffect(() => {
+  const animation = useRef<Animation | null>(null);
+  const closing = useRef(false);
+  useLayoutEffect(() => {
     const d = ref.current!;
     d.showModal();
-    return () => d.close();
-  }, []);
+    if (!reducedMotion() && typeof d.animate === "function") {
+      animation.current = d.animate(dialogFrames(d, origin), {
+        duration: origin ? 460 : 280,
+        easing: easeOut,
+      });
+    }
+    return () => {
+      animation.current?.cancel();
+      d.close();
+      if (origin?.isConnected) origin.focus({ preventScroll: true });
+    };
+  }, [origin]);
+  async function requestClose() {
+    const d = ref.current;
+    if (!d || closing.current) return;
+    closing.current = true;
+    const current = getComputedStyle(d);
+    const start = {
+      transform: current.transform,
+      opacity: current.opacity,
+      filter: current.filter,
+    };
+    animation.current?.cancel();
+    d.dataset.closing = "true";
+    if (!reducedMotion() && typeof d.animate === "function") {
+      const frames = [start, dialogFrames(d, origin)[0]];
+      animation.current = d.animate(frames, {
+        duration: origin ? 280 : 180,
+        easing: "cubic-bezier(0.4, 0, 0.6, 1)",
+        fill: "forwards",
+      });
+      await animation.current.finished.catch(() => undefined);
+    }
+    if (!d.isConnected) return;
+    onClose();
+    animation.current?.cancel();
+    delete d.dataset.closing;
+    closing.current = false;
+  }
   return (
     <dialog
       ref={ref}
       onCancel={(e) => {
         e.preventDefault();
-        onClose();
+        void requestClose();
       }}
-      className="modal"
+      className={`modal ${className}`}
       aria-labelledby={headingId}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target !== e.currentTarget) return;
+        const box = e.currentTarget.getBoundingClientRect();
+        if (
+          e.clientX < box.left ||
+          e.clientX > box.right ||
+          e.clientY < box.top ||
+          e.clientY > box.bottom
+        )
+          void requestClose();
       }}
     >
       <div className="modal-heading">
         <h2 id={headingId}>{title}</h2>
-        <button className="icon-button" onClick={onClose} aria-label="Stäng">
+        <button
+          className="icon-button"
+          onClick={() => void requestClose()}
+          aria-label="Stäng"
+        >
           <X size={21} />
         </button>
       </div>

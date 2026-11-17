@@ -111,6 +111,7 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   await chart.focus();
   await page.keyboard.press("ArrowRight");
   await expect(performance.locator(".chart-tooltip")).toBeVisible();
+  await expect(performance.locator(".chart-tooltip > div")).toHaveCount(3);
   await capture(page, {
     path: `artifacts/screenshots/statistik-${info.project.name}.png`,
     fullPage: true,
@@ -153,6 +154,234 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(info.project.use.viewport!.width);
+  expect(errors).toEqual([]);
+});
+
+test("månadsliga, månadsvinnare, tom månad och återgång till totaltabell", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-11-17T12:00:00+01:00"));
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Ligatabellen" }),
+  ).toBeVisible();
+  const total = await page
+    .locator(".league-summary strong")
+    .first()
+    .innerText();
+  await page.getByRole("button", { name: "Månadsliga", exact: true }).click();
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-10");
+  await expect(page.locator(".month-winner")).toContainText("Elias");
+  await expect(page.locator(".month-winner")).toContainText("9");
+  await expect(page.locator(".league-summary strong").first()).toHaveText(
+    total,
+  );
+  await page
+    .locator(".league-table")
+    .getByRole("link", { name: /Adrian/ })
+    .click();
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-01",
+  );
+  await expect(page.getByLabel("Till", { exact: true })).toHaveValue(
+    "2026-10-31",
+  );
+  await page.goBack();
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-11");
+  await expect(page.locator(".month-empty")).toContainText(
+    "Inga raster registrerade",
+  );
+  await expect(page.locator(".month-winner")).toHaveCount(0);
+  await expect(page.locator(".league-table .leader")).toHaveCount(0);
+  await expect(page.locator(".league-summary strong").first()).toHaveText("0");
+  const archiveCard = page.getByRole("button", {
+    name: "Visa oktober 2026",
+    exact: true,
+  });
+  await archiveCard.scrollIntoViewIfNeeded();
+  const beforeArchive = await page.evaluate(() => scrollY);
+  await archiveCard.click();
+  const archiveDialog = page.getByRole("dialog", {
+    name: "oktober 2026",
+    exact: true,
+  });
+  await expect(archiveDialog).toBeVisible();
+  await expect(archiveDialog.locator(".league-table tbody tr")).toHaveCount(3);
+  await expect(archiveDialog.locator(".month-winner")).toContainText("Elias");
+  await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
+  await page.keyboard.press("Escape");
+  await expect(archiveDialog).toHaveCount(0);
+  await expect(archiveCard).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBeCloseTo(beforeArchive, 0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-11",
+  );
+  await page.getByLabel("Ligamånad", { exact: true }).selectOption("2026-10");
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.reload();
+  await expect(page.getByLabel("Ligamånad", { exact: true })).toHaveValue(
+    "2026-10",
+  );
+  await page.getByRole("button", { name: "Totalt", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ligatabellen" }),
+  ).toBeVisible();
+  await expect(page.locator(".league-summary strong").first()).toHaveText(
+    total,
+  );
+  await expect(page.locator(".league-table tbody tr")).toHaveCount(3);
+  const width = page.viewportSize()!.width;
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(width);
+  expect(errors).toEqual([]);
+});
+
+test("statistikhem: ringdiagram, rätt nämnare, duellval och ärvda datumfilter", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/#/statistik?period=custom&from=2026-10-22&to=2026-10-26");
+  const hero = page.getByRole("region", {
+    name: "Ligan i siffror",
+    exact: true,
+  });
+  await expect(hero).toBeVisible();
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
+  await expect(hero.locator(".stats-hero-totals > div").first()).toContainText(
+    "7",
+  );
+  await hero.getByRole("button", { name: /Adrian/ }).click();
+  await expect(hero.getByRole("status")).toContainText("26,3 %");
+  await expect(hero.getByRole("status")).toContainText("5 av 19 matcher vunna");
+  await hero.getByRole("button", { name: "Raster", exact: true }).click();
+  await expect(hero.getByRole("status")).toContainText("20,0 %");
+  await expect(hero.getByRole("status")).toContainText("1 av 5 raster vunna");
+  await page
+    .getByRole("region", { name: "Spelarnas resultat i urvalet" })
+    .getByRole("link", { name: /Adrian/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Adrian", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-22",
+  );
+  await expect(page.getByLabel("Till", { exact: true })).toHaveValue(
+    "2026-10-26",
+  );
+  await page.goBack();
+  const duel = page.getByRole("region", { name: "Duellöversikt" });
+  await duel.scrollIntoViewIfNeeded();
+  await duel.getByLabel("Spelarpar i översikten").selectOption("dave-elias");
+  await expect(duel.getByLabel("Dave 4, Elias 4 matchvinster")).toBeVisible();
+  await expect(duel).toContainText("2 oavgjorda");
+  await duel.getByRole("link").click();
+  await expect(page.locator(".duel-heading")).toContainText("Elias");
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-22",
+  );
+  await page.goto("/#/statistik?period=custom&from=2027-01-01&to=2027-01-31");
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("0");
+  await expect(hero.getByRole("status")).toContainText("Inget underlag");
+  await expect(page.locator("main")).not.toContainText(/NaN|Infinity/);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(page.viewportSize()!.width);
+  expect(errors).toEqual([]);
+});
+
+test("statistikens uppbyggnad följer scroll och minskad rörelse", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#/statistik?period=custom&from=2026-10-22&to=2026-10-26");
+  const hero = page.getByRole("region", {
+    name: "Ligan i siffror",
+    exact: true,
+  });
+  await expect(hero).toHaveAttribute("data-built", "true");
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
+  const lastChart = page.locator(".stats-chart-build").last();
+  await expect(lastChart).not.toHaveAttribute("data-built");
+  await lastChart.scrollIntoViewIfNeeded();
+  await expect(lastChart).toHaveAttribute("data-built", "true");
+  await expect(
+    lastChart.locator(".recharts-line-dots .recharts-dot").first(),
+  ).toBeVisible();
+  await hero.scrollIntoViewIfNeeded();
+  await expect(lastChart).toHaveAttribute("data-built", "true");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await expect(
+    hero.locator(".stats-big-number .stats-count-visual"),
+  ).toHaveText("27");
+  await expect(page.locator(".stats-build:not([data-built])")).toHaveCount(0);
+  expect(
+    await hero
+      .locator(".stats-ring-value")
+      .evaluateAll(
+        (circles) => circles.flatMap((circle) => circle.getAnimations()).length,
+      ),
+  ).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test("arkivdialog: delbar adress, bakgrundsklick och minskad rörelse", async ({
+  page,
+}) => {
+  await page.clock.setFixedTime(new Date("2026-11-17T12:00:00+01:00"));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/#/?arkiv=2026-10");
+  const dialog = page.getByRole("dialog", {
+    name: "oktober 2026",
+    exact: true,
+  });
+  await expect(dialog).toBeVisible();
+  expect(
+    await dialog.evaluate((element) => element.getAnimations().length),
+  ).toBe(0);
+  await page.reload();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stäng", exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+  const card = page.getByRole("button", {
+    name: "Visa oktober 2026",
+    exact: true,
+  });
+  await card.click();
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(2, 2);
+  await expect(dialog).toHaveCount(0);
+  await expect(card).toBeFocused();
+  await card.click();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
   expect(errors).toEqual([]);
 });
 test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning", async ({
@@ -219,6 +448,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       .getByRole("button", { name: "Spara ändringar", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
     await page.getByLabel("Till datum").fill("2001-02-04");
     await expect(page.locator(".match-score")).toContainText("2:2");
     const edited = (await admin.from("matches").select().eq("id", id).single())
@@ -243,6 +473,7 @@ test("personlig kod, skapa, ändra, ta bort, bestående session och utloggning",
       .getByRole("button", { name: "Ja, ta bort", exact: true })
       .click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
     expect((await admin.rpc("league_snapshot")).data.count).toBe(initialCount);
     id = undefined;
     await page.locator(".editor-button").click();

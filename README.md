@@ -6,6 +6,8 @@ Mobilanpassad pingisliga för Adrian, Dave och Elias. Publik ligatabell, rasthis
 
 React, strikt TypeScript, Vite, Tailwind CSS, Lucide, Recharts, TanStack Query och HashRouter. Supabase PostgreSQL och en Edge Function hanterar alla skrivningar. Ingen Node-server behövs för produktionsfrontend.
 
+Lokalt UI-test med månadsligor och glastema: [EXPERIMENT.md](EXPERIMENT.md).
+
 ## Kom igång
 
 Kräver Node 22.12+, npm, Docker och Supabase CLI 2.104+. Kör från projektmappen. I Windows PowerShell kan `npm.cmd` / `supabase.cmd` behövas för att argument efter `--` ska vidarebefordras korrekt.

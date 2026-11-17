@@ -1,0 +1,302 @@
+:root {
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-press: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+html {
+  scrollbar-gutter: stable;
+}
+/* Derive the lock from native dialog state, including nested dialogs and reloads. */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+button,
+.button,
+.desktop-nav a,
+.mobile-nav a,
+.player-selector a,
+.duel-selector a {
+  transition:
+    scale 240ms var(--ease-spring),
+    translate 240ms var(--ease-spring),
+    background 180ms ease,
+    box-shadow 240ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+button:not(:disabled):active,
+.button:active,
+.player-selector a:active,
+.duel-selector a:active {
+  scale: 0.965;
+  transition-duration: 90ms;
+  transition-timing-function: var(--ease-press);
+}
+.icon-button:not(:disabled):active,
+.step-buttons button:not(:disabled):active {
+  scale: 0.89;
+}
+.archive-month:not(:disabled):active {
+  scale: 0.98;
+}
+.desktop-nav a:active,
+.mobile-nav a:active {
+  scale: 0.94;
+}
+.step-buttons button svg,
+.register-cta > svg,
+.archive-month-label svg:last-child {
+  transition: transform 300ms var(--ease-spring);
+}
+.step-buttons button:active svg {
+  transform: scale(1.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  .archive-month:hover {
+    translate: 0 -3px;
+  }
+  .archive-month:hover .archive-month-label svg:last-child,
+  .register-cta:hover > svg {
+    transform: translate(2px, -2px);
+  }
+}
+
+.desktop-nav,
+.mobile-nav,
+.league-mode {
+  position: relative;
+  isolation: isolate;
+}
+/* Preserve the mobile toolbar's fixed positioning. */
+@media (max-width: 640px) {
+  .mobile-nav {
+    position: fixed;
+  }
+}
+.selection-indicator {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 0;
+  opacity: 0;
+  border-radius: 24px;
+  background: linear-gradient(140deg, #ffffff13, #ffffff08);
+  border: 1px solid #ffffff0b;
+  box-shadow:
+    0 2px 8px #00000020,
+    inset 0 1px 0 #ffffff09;
+  pointer-events: none;
+  transition:
+    transform 420ms var(--ease-spring),
+    width 420ms var(--ease-spring),
+    opacity 180ms ease;
+  z-index: 0;
+}
+.selection-indicator[data-ready] {
+  opacity: 1;
+}
+.desktop-nav a,
+.mobile-nav a,
+.league-mode button {
+  position: relative;
+  z-index: 1;
+}
+.desktop-nav a.active,
+.mobile-nav a.active,
+.league-mode .selected {
+  background: transparent;
+  box-shadow: none;
+}
+.league-mode .selection-indicator {
+  top: 4px;
+  bottom: 4px;
+}
+
+.route-view {
+  animation: view-enter 280ms var(--ease-spring) both;
+}
+.notice.success {
+  animation: feedback-enter 360ms var(--ease-spring) both;
+}
+.score-controls {
+  animation: view-enter 300ms var(--ease-spring) both;
+}
+.metric {
+  animation: view-enter 320ms var(--ease-spring) both;
+}
+.metric:nth-child(2) {
+  animation-delay: 25ms;
+}
+.metric:nth-child(3) {
+  animation-delay: 50ms;
+}
+.metric:nth-child(4) {
+  animation-delay: 75ms;
+}
+.metric:nth-child(5) {
+  animation-delay: 100ms;
+}
+.modal {
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+.modal[open]:not([data-closing])::backdrop {
+  animation: backdrop-enter 260ms ease both;
+}
+.modal[data-closing]::backdrop {
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.month-modal {
+  max-width: 760px;
+  max-height: min(820px, calc(100dvh - 48px));
+  padding: 0;
+  border-radius: 28px;
+  background: linear-gradient(155deg, #202d25fc, #141e19fc);
+  border: 1px solid #ffffff20;
+  box-shadow:
+    0 40px 120px #00000088,
+    inset 0 1px 0 #ffffff0b;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #5a6f6059 transparent;
+}
+.month-modal .modal-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 20px 26px;
+  background: #1c2821e8;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid #ffffff09;
+}
+.month-modal .modal-heading h2 {
+  text-transform: capitalize;
+  font-size: 21px;
+}
+.month-modal .modal-heading .icon-button {
+  border-radius: 50%;
+  background: #ffffff08;
+}
+.month-modal-content {
+  padding-top: 18px;
+  animation: detail-enter 360ms 70ms var(--ease-spring) both;
+}
+.month-modal-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 17px 26px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.month-modal-summary strong {
+  font-size: 19px;
+  color: var(--text);
+  font-weight: 600;
+  margin-right: 3px;
+}
+.month-modal-summary > span:last-child {
+  margin-left: auto;
+  font-size: 10px;
+}
+.month-modal-history {
+  padding: 24px 26px 12px;
+}
+.month-modal-history h3 {
+  margin-bottom: 12px;
+}
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes feedback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes detail-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 640px) {
+  .month-modal {
+    width: calc(100% - 16px);
+    max-height: calc(100dvh - 28px);
+    border-radius: 25px;
+  }
+  .month-modal .modal-heading {
+    padding: 14px 18px;
+  }
+  .month-modal .modal-heading h2 {
+    font-size: 19px;
+  }
+  .month-modal-summary {
+    padding: 16px 18px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .month-modal-summary > span:last-child {
+    margin-left: 0;
+  }
+  .month-modal-history {
+    padding: 22px 18px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  button:not(:disabled):active,
+  .icon-button:not(:disabled):active,
+  .step-buttons button:not(:disabled):active,
+  .archive-month:not(:disabled):active,
+  .button:active,
+  .desktop-nav a:active,
+  .mobile-nav a:active,
+  .archive-month:hover,
+  .player-selector a:active,
+  .duel-selector a:active {
+    scale: 1;
+    translate: none;
+  }
+  .step-buttons button:active svg,
+  .register-cta:hover > svg,
+  .archive-month:hover .archive-month-label svg:last-child {
+    transform: none;
+  }
+}

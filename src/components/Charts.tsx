@@ -4,6 +4,8 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Area,
+  ComposedChart,
   BarChart,
   Bar,
   XAxis,
@@ -16,6 +18,7 @@ import { PLAYERS, dateLabel, format } from "../lib/domain";
 import type { PlayerId } from "../lib/domain";
 import type { ChartRow } from "../lib/statistics";
 import { Empty } from "./ui";
+import { useStatisticsBuild } from "./StatisticsMotion";
 interface Props {
   title: string;
   description?: string;
@@ -28,6 +31,9 @@ interface Props {
   players?: PlayerId[];
   max?: number;
   step?: boolean;
+  height?: number;
+  filled?: boolean;
+  build?: boolean;
 }
 export default function ChartCard({
   title,
@@ -41,13 +47,20 @@ export default function ChartCard({
   players = PLAYERS.map((p) => p.id),
   max,
   step = false,
+  height = 240,
+  filled = false,
+  build = false,
 }: Props) {
+  const { ref, ready, motion } = useStatisticsBuild<HTMLElement>(build);
+  const animate = build && ready && motion;
   const [hidden, setHidden] = useState<PlayerId[]>([]);
   const activityLabel = activityMetric === "breaks" ? "Raster" : "Matcher";
   const activityKey = activityMetric === "breaks" ? "count" : "matchesPlayed";
   const sample = (row: ChartRow, p: PlayerId) =>
     `${row[`${p}_count`]} raster${matchSample ? ` · ${row[`${p}_matches`]} matcher` : ""}`;
   const id = useId();
+  const TrendChart = filled ? ComposedChart : LineChart;
+  const gradientId = (p: PlayerId) => `trend-${id.replace(/:/g, "")}-${p}`;
   const chartData = data.map((row) => ({
     ...row,
     time: Date.parse(row.date + "T12:00:00Z"),
@@ -94,7 +107,11 @@ export default function ChartCard({
   };
   const axes = (
     <>
-      <CartesianGrid stroke="#354b60" vertical={false} strokeDasharray="3 5" />
+      <CartesianGrid
+        stroke="var(--line)"
+        vertical={false}
+        strokeDasharray="3 5"
+      />
       <XAxis
         dataKey="time"
         type="number"
@@ -107,14 +124,14 @@ export default function ChartCard({
         ticks={chartData.map((row) => row.time)}
         padding={{ left: 12, right: 12 }}
         tickFormatter={label}
-        tick={{ fill: "#a5b7c9", fontSize: 11 }}
+        tick={{ fill: "var(--muted)", fontSize: 11 }}
         tickLine={false}
         axisLine={false}
         minTickGap={32}
       />
       <YAxis
         width={35}
-        tick={{ fill: "#a5b7c9", fontSize: 11 }}
+        tick={{ fill: "var(--muted)", fontSize: 11 }}
         axisLine={false}
         tickLine={false}
         domain={max ? [0, max] : activity ? [0, "auto"] : ["auto", "auto"]}
@@ -122,12 +139,18 @@ export default function ChartCard({
       />
       <Tooltip
         content={tooltip}
-        cursor={{ stroke: "#a5b7c9", strokeDasharray: "3 3" }}
+        payloadUniqBy={(entry) => entry.dataKey}
+        cursor={{ stroke: "var(--muted)", strokeDasharray: "3 3" }}
       />
     </>
   );
   return (
-    <section className="card chart-card" aria-labelledby={id}>
+    <section
+      ref={ref}
+      className={`card chart-card${build ? " stats-build stats-chart-build" : ""}`}
+      data-built={ready || undefined}
+      aria-labelledby={id}
+    >
       <div className="chart-heading">
         <div>
           <h2 id={id}>{title}</h2>
@@ -159,8 +182,13 @@ export default function ChartCard({
         <Empty title="Inga raster i urvalet" />
       ) : (
         <>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={240} minWidth={0}>
+          <div className="chart-container" style={{ height }}>
+            <ResponsiveContainer
+              key={ready ? "ready" : "waiting"}
+              width="100%"
+              height={height}
+              minWidth={0}
+            >
               {activity ? (
                 <BarChart
                   data={chartData}
@@ -171,22 +199,65 @@ export default function ChartCard({
                   <Bar
                     dataKey={activityKey}
                     name={activityLabel}
-                    fill="#bef26d"
+                    fill="var(--accent)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={40}
-                    isAnimationActive={false}
+                    isAnimationActive={animate}
+                    animationDuration={760}
+                    animationEasing="ease-out"
                   />
                 </BarChart>
               ) : (
-                <LineChart
+                <TrendChart
                   data={chartData}
                   accessibilityLayer
                   margin={{ top: 12, right: 8, left: 0, bottom: 2 }}
                 >
+                  {filled && (
+                    <defs>
+                      {PLAYERS.map((p) => (
+                        <linearGradient
+                          key={p.id}
+                          id={gradientId(p.id)}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor={p.color}
+                            stopOpacity={0.15}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor={p.color}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                  )}
                   {axes}
+                  {filled &&
+                    PLAYERS.filter(
+                      (p) => players.includes(p.id) && !hidden.includes(p.id),
+                    ).map((p) => (
+                      <Area
+                        key={`area-${p.id}`}
+                        type={step ? "stepAfter" : "linear"}
+                        dataKey={p.id}
+                        stroke="none"
+                        fill={`url(#${gradientId(p.id)})`}
+                        tooltipType="none"
+                        legendType="none"
+                        connectNulls={false}
+                        isAnimationActive={false}
+                      />
+                    ))}
                   {PLAYERS.filter(
                     (p) => players.includes(p.id) && !hidden.includes(p.id),
-                  ).map((p) => (
+                  ).map((p, index) => (
                     <Line
                       key={p.id}
                       dataKey={p.id}
@@ -197,10 +268,13 @@ export default function ChartCard({
                       activeDot={{ r: 5 }}
                       connectNulls={false}
                       type={step ? "stepAfter" : "linear"}
-                      isAnimationActive={false}
+                      isAnimationActive={animate}
+                      animationBegin={index * 60}
+                      animationDuration={900}
+                      animationEasing="ease-out"
                     />
                   ))}
-                </LineChart>
+                </TrendChart>
               )}
             </ResponsiveContainer>
           </div>

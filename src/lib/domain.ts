@@ -1,7 +1,7 @@
 export const PLAYERS = [
-  { id: "adrian", name: "Adrian", color: "#bef26d" },
-  { id: "dave", name: "Dave", color: "#6cbcff" },
-  { id: "elias", name: "Elias", color: "#d4a1ff" },
+  { id: "adrian", name: "Adrian", color: "#b6df8d" },
+  { id: "dave", name: "Dave", color: "#84b7ed" },
+  { id: "elias", name: "Elias", color: "#c0a1df" },
 ] as const;
 export type PlayerId = (typeof PLAYERS)[number]["id"];
 export const PAIRS: [PlayerId, PlayerId][] = [

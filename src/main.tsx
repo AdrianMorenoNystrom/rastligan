@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./components/providers";
 import App from "./App";
 import "./styles.css";
+import "./glass.css";
+import "./motion.css";
+import "./statistics-home.css";
 const client = new QueryClient();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

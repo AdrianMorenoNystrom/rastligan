@@ -6,6 +6,7 @@ import {
   Route,
   Link,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import {
   Trophy,
@@ -22,6 +23,8 @@ import { DataBoundary, Modal } from "./components/ui";
 import { Login } from "./components/Login";
 import { player } from "./lib/domain";
 import League from "./pages/League";
+import { GlassMaterial } from "./components/GlassMaterial";
+import { SelectionIndicator } from "./components/SelectionIndicator";
 const History = lazy(() => import("./pages/History"));
 const Register = lazy(() => import("./pages/Register"));
 const Statistics = lazy(() => import("./pages/Statistics"));
@@ -32,6 +35,7 @@ const links = [
   { to: "/statistik", label: "Statistik", icon: ChartNoAxesCombined },
 ];
 function Shell() {
+  const location = useLocation();
   const [login, setLogin] = useState(false);
   const auth = useAuth();
   const query = useBreaks();
@@ -57,6 +61,8 @@ function Shell() {
             Rastligan<span className="brand-period">.</span>
           </Link>
           <nav className="desktop-nav" aria-label="Huvudnavigation">
+            <GlassMaterial />
+            <SelectionIndicator value={location.pathname} />
             {links.map(({ to, label, icon: Icon }) => (
               <NavLink to={to} key={to} end={to === "/"}>
                 <Icon size={18} />
@@ -100,42 +106,46 @@ function Shell() {
             <button onClick={auth.refresh}>Försök igen</button>
           </p>
         )}
-        <Suspense fallback={<p role="status">Laddar vyn…</p>}>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <DataBoundary>
-                  <League />
-                </DataBoundary>
-              }
-            />
-            <Route
-              path="/raster"
-              element={
-                <DataBoundary>
-                  <History />
-                </DataBoundary>
-              }
-            />
-            <Route
-              path="/matcher"
-              element={<Navigate to="/raster" replace />}
-            />
-            <Route path="/registrera" element={<Register />} />
-            <Route
-              path="/statistik/:section?/:id?"
-              element={
-                <DataBoundary>
-                  <Statistics />
-                </DataBoundary>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        <div className="route-view" key={location.pathname}>
+          <Suspense fallback={<p role="status">Laddar vyn…</p>}>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <DataBoundary>
+                    <League />
+                  </DataBoundary>
+                }
+              />
+              <Route
+                path="/raster"
+                element={
+                  <DataBoundary>
+                    <History />
+                  </DataBoundary>
+                }
+              />
+              <Route
+                path="/matcher"
+                element={<Navigate to="/raster" replace />}
+              />
+              <Route path="/registrera" element={<Register />} />
+              <Route
+                path="/statistik/:section?/:id?"
+                element={
+                  <DataBoundary>
+                    <Statistics />
+                  </DataBoundary>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
       </main>
       <nav className="mobile-nav" aria-label="Mobilnavigation">
+        <GlassMaterial mobile />
+        <SelectionIndicator value={location.pathname} />
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} end={to === "/"}>
             <Icon size={22} strokeWidth={1.7} />
