@@ -23,7 +23,7 @@ Automatiska tester täcker kalendermånader, årsskifte, skottår, månadsvinnar
 
 Det här testet byter inte poängsystem, autentisering, import eller produktionsdata.
 
-Verifierat: 82 enhetstester, 16 E2E-tester, lint, typecheck och produktionsbygge. Arkivtesterna omfattar Escape, bakgrundsklick, delbar adress, omladdning, bibehållen scroll, återställt fokus och minskad rörelse. Även scroll efter stängda redigerings- och borttagningsdialoger kontrolleras. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
+Verifierat: 86 enhetstester, 20 E2E-tester, lint, typecheck och produktionsbygge. Arkivtesterna omfattar Escape, bakgrundsklick, delbar adress, omladdning, bibehållen scroll, återställt fokus och minskad rörelse. Även scroll efter stängda redigerings- och borttagningsdialoger kontrolleras. Lokaldata efter testerna: åtta raster, 33 individuella matcher.
 
 Förhandsbilder: [månadsliga på desktop](artifacts/screenshots/monthly-glass-desktop.png), [månadsliga på mobil](artifacts/screenshots/monthly-glass-mobile.png), [registrering på mobil](artifacts/screenshots/monthly-glass-register.png). De tidigare granskningsbilderna visar den publicerade versionen och har behållits för jämförelse.
 
@@ -38,3 +38,15 @@ Darkmode-kontrollen omfattade även [statistik på desktop](artifacts/screenshot
 - Animationerna använder CSS och Web Animations API utan ett extra animationsbibliotek. Minskad rörelse stänger av förflyttningar, knappskalning och dialoganimationer.
 
 Arkivdialogens slutläge: [desktop](artifacts/screenshots/monthly-glass-archive-desktop.png) och [mobil](artifacts/screenshots/monthly-glass-archive-mobile.png).
+
+## Statistikens startsida
+
+Öppna http://127.0.0.1:5173/#/statistik. Översikten visar antal matcher, raster, speldagar, matcher per rast och oavgjorda raster i vald period.
+
+- Tre animerade ringar visar spelarnas vinstprocent. Varje ring har en egen skala från 0 till 100 procent. Välj spelare för att se vunna och spelade matcher, eller växla till raster för rastvinstprocent. Saknat underlag visas med streck.
+- Spelarkorten visar placering, ligapoäng, P/R och vunna, oavgjorda och förlorade raster. Korten öppnar spelarprofilen med samma datumfilter.
+- Duellpanelen kan växla mellan alla tre spelarpar. Den skiljer på individuella matchvinster och rastvinster och länkar till duellen inom samma period.
+- Befintliga diagram för P/R, aktivitet och sammanlagda ligapoäng finns kvar, liksom speldagskalendern och flikarna Spelare, Dueller och Rekord. P/R-diagrammet har diskreta färgfält under linjerna. Luckor och verkliga mätvärden bevaras.
+- Sammanfattningen kan visas medan diagramkoden laddas. Layouten anpassas för mobil och ringanimationerna följer inställningen för minskad rörelse.
+
+Tester kontrollerar skilda nämnare för match- och rastvinstprocent, tomt urval, ärvda datumfilter, byte av duell och att diagrammets tooltip visar ett värde per spelare. Mobil och desktop har även granskats visuellt: [desktop](artifacts/screenshots/statistics-home-desktop.png), [mobil](artifacts/screenshots/statistics-home-mobile.png).

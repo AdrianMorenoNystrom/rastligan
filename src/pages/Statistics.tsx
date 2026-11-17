@@ -4,6 +4,12 @@ import { CalendarDays, ArrowUpRight, ChevronDown, Info } from "lucide-react";
 import { useBreaks } from "../components/providers";
 import { PageHeading, Metrics, Empty, ErrorText } from "../components/ui";
 import {
+  StatisticsHero,
+  PlayerSnapshots,
+  DuelSnapshot,
+} from "../components/StatisticsHome";
+import { SelectionIndicator } from "../components/SelectionIndicator";
+import {
   PLAYERS,
   PAIRS,
   player,
@@ -18,7 +24,6 @@ import {
 import type { DateRange, BreakSession, PlayerId } from "../lib/domain";
 import {
   standings,
-  summary,
   performance,
   cumulative,
   resolutionFor,
@@ -117,7 +122,6 @@ function Overview({
   selected: BreakSession[];
   range: DateRange;
 }) {
-  const s = summary(selected);
   const [resolution, setResolution] = useState<Resolution | null>(null);
   const res = resolution || resolutionFor(all, range);
   const [activityMetric, setActivityMetric] = useState<"breaks" | "matches">(
@@ -125,83 +129,74 @@ function Overview({
   );
   return (
     <>
-      <Metrics
-        items={[
-          { label: "Raster", value: s.breaks },
-          { label: "Spelade matcher", value: s.matchesPlayed },
-          {
-            label: "Oavgjorda raster",
-            value: fmtPercent(s.breakDrawPercent),
-            hint: `${s.breaks} raster`,
-          },
-          {
-            label: "Matcher per rast",
-            value: format(s.matchesPerBreak),
-            hint: `${s.breaks} raster`,
-          },
-          {
-            label: "Aktiva speldagar",
-            value: s.days,
-          },
-        ]}
-      />
-      <div className="resolution-bar">
-        <span>Gruppera efter</span>
-        <select
-          aria-label="Diagrammens upplösning"
-          value={resolution || "auto"}
-          onChange={(e) =>
-            setResolution(
-              e.target.value === "auto" ? null : (e.target.value as Resolution),
-            )
-          }
-        >
-          <option value="auto">Automatiskt</option>
-          <option value="day">Dag</option>
-          <option value="week">Vecka</option>
-          <option value="month">Månad</option>
-        </select>
-      </div>
-      <Chart
-        title="Poäng per rast över tid"
-        description="P/R = poäng per rast i perioden. Luckor visar perioder utan raster."
-        data={performance(all, range, res)}
-        max={3}
-      />
-      <div className="chart-grid">
-        <Chart
-          title={
-            activityMetric === "breaks" ? "Rastaktivitet" : "Matchaktivitet"
-          }
-          description={`${activityMetric === "breaks" ? "Raster" : "Individuella matcher"} per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
-          data={performance(all, range, res)}
-          activity
-          activityMetric={activityMetric}
-          controls={
-            <label className="activity-selector">
-              Aktivitet
-              <select
-                aria-label="Aktivitetsmått"
-                value={activityMetric}
-                onChange={(e) =>
-                  setActivityMetric(e.target.value as "breaks" | "matches")
-                }
-              >
-                <option value="breaks">Raster</option>
-                <option value="matches">Individuella matcher</option>
-              </select>
-            </label>
-          }
-        />
-        <Chart
-          title="Ligapoäng över tid"
-          description="Totalpoäng vid dagens slut, inklusive poäng före vald period."
-          data={cumulative(all, range)}
-          step
-          unit="poäng"
-        />
-      </div>
-      <ActivityCalendar breaks={selected} />
+      <StatisticsHero selected={selected} range={range} />
+      <PlayerSnapshots selected={selected} />
+      <Suspense fallback={<p role="status">Laddar diagram…</p>}>
+        <div className="resolution-bar">
+          <span>Gruppera efter</span>
+          <select
+            aria-label="Diagrammens upplösning"
+            value={resolution || "auto"}
+            onChange={(e) =>
+              setResolution(
+                e.target.value === "auto"
+                  ? null
+                  : (e.target.value as Resolution),
+              )
+            }
+          >
+            <option value="auto">Automatiskt</option>
+            <option value="day">Dag</option>
+            <option value="week">Vecka</option>
+            <option value="month">Månad</option>
+          </select>
+        </div>
+        <div className="stats-performance-grid">
+          <Chart
+            title="Poäng per rast över tid"
+            description="P/R = poäng per rast i perioden. Luckor visar perioder utan raster."
+            data={performance(all, range, res)}
+            max={3}
+            height={290}
+            filled
+          />
+          <DuelSnapshot selected={selected} />
+        </div>
+        <div className="chart-grid">
+          <Chart
+            title={
+              activityMetric === "breaks" ? "Rastaktivitet" : "Matchaktivitet"
+            }
+            description={`${activityMetric === "breaks" ? "Raster" : "Individuella matcher"} per ${res === "day" ? "dag" : res === "week" ? "vecka" : "månad"}.`}
+            data={performance(all, range, res)}
+            activity
+            activityMetric={activityMetric}
+            controls={
+              <label className="activity-selector">
+                Aktivitet
+                <select
+                  aria-label="Aktivitetsmått"
+                  value={activityMetric}
+                  onChange={(e) =>
+                    setActivityMetric(e.target.value as "breaks" | "matches")
+                  }
+                >
+                  <option value="breaks">Raster</option>
+                  <option value="matches">Individuella matcher</option>
+                </select>
+              </label>
+            }
+          />
+          <Chart
+            title="Ligapoäng över tid"
+            description="Totalpoäng vid dagens slut, inklusive poäng före vald period."
+            data={cumulative(all, range)}
+            step
+            unit="poäng"
+          />
+        </div>
+        <ActivityCalendar breaks={selected} />
+      </Suspense>
     </>
   );
 }
@@ -768,7 +763,11 @@ export default function Statistics() {
     <>
       <PageHeading title="Statistik" />
       <DateFilter value={preset} range={range} onChange={changePeriod} />
-      <nav className="statistics-tabs" aria-label="Statistiksektioner">
+      <nav
+        className="statistics-tabs stats-section-tabs"
+        aria-label="Statistiksektioner"
+      >
+        <SelectionIndicator value={active} />
         {tabs.map(([s, label]) => (
           <Link
             key={s}

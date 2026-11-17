@@ -4,6 +4,8 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Area,
+  ComposedChart,
   BarChart,
   Bar,
   XAxis,
@@ -28,6 +30,8 @@ interface Props {
   players?: PlayerId[];
   max?: number;
   step?: boolean;
+  height?: number;
+  filled?: boolean;
 }
 export default function ChartCard({
   title,
@@ -41,6 +45,8 @@ export default function ChartCard({
   players = PLAYERS.map((p) => p.id),
   max,
   step = false,
+  height = 240,
+  filled = false,
 }: Props) {
   const [hidden, setHidden] = useState<PlayerId[]>([]);
   const activityLabel = activityMetric === "breaks" ? "Raster" : "Matcher";
@@ -48,6 +54,8 @@ export default function ChartCard({
   const sample = (row: ChartRow, p: PlayerId) =>
     `${row[`${p}_count`]} raster${matchSample ? ` · ${row[`${p}_matches`]} matcher` : ""}`;
   const id = useId();
+  const TrendChart = filled ? ComposedChart : LineChart;
+  const gradientId = (p: PlayerId) => `trend-${id.replace(/:/g, "")}-${p}`;
   const chartData = data.map((row) => ({
     ...row,
     time: Date.parse(row.date + "T12:00:00Z"),
@@ -126,6 +134,7 @@ export default function ChartCard({
       />
       <Tooltip
         content={tooltip}
+        payloadUniqBy={(entry) => entry.dataKey}
         cursor={{ stroke: "var(--muted)", strokeDasharray: "3 3" }}
       />
     </>
@@ -163,8 +172,8 @@ export default function ChartCard({
         <Empty title="Inga raster i urvalet" />
       ) : (
         <>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height={240} minWidth={0}>
+          <div className="chart-container" style={{ height }}>
+            <ResponsiveContainer width="100%" height={height} minWidth={0}>
               {activity ? (
                 <BarChart
                   data={chartData}
@@ -182,12 +191,53 @@ export default function ChartCard({
                   />
                 </BarChart>
               ) : (
-                <LineChart
+                <TrendChart
                   data={chartData}
                   accessibilityLayer
                   margin={{ top: 12, right: 8, left: 0, bottom: 2 }}
                 >
+                  {filled && (
+                    <defs>
+                      {PLAYERS.map((p) => (
+                        <linearGradient
+                          key={p.id}
+                          id={gradientId(p.id)}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor={p.color}
+                            stopOpacity={0.15}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor={p.color}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                  )}
                   {axes}
+                  {filled &&
+                    PLAYERS.filter(
+                      (p) => players.includes(p.id) && !hidden.includes(p.id),
+                    ).map((p) => (
+                      <Area
+                        key={`area-${p.id}`}
+                        type={step ? "stepAfter" : "linear"}
+                        dataKey={p.id}
+                        stroke="none"
+                        fill={`url(#${gradientId(p.id)})`}
+                        tooltipType="none"
+                        legendType="none"
+                        connectNulls={false}
+                        isAnimationActive={false}
+                      />
+                    ))}
                   {PLAYERS.filter(
                     (p) => players.includes(p.id) && !hidden.includes(p.id),
                   ).map((p) => (
@@ -204,7 +254,7 @@ export default function ChartCard({
                       isAnimationActive={false}
                     />
                   ))}
-                </LineChart>
+                </TrendChart>
               )}
             </ResponsiveContainer>
           </div>

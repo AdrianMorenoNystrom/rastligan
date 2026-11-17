@@ -111,6 +111,7 @@ test("publika vyer, filter, interaktiva diagram och responsiv layout", async ({
   await chart.focus();
   await page.keyboard.press("ArrowRight");
   await expect(performance.locator(".chart-tooltip")).toBeVisible();
+  await expect(performance.locator(".chart-tooltip > div")).toHaveCount(3);
   await capture(page, {
     path: `artifacts/screenshots/statistik-${info.project.name}.png`,
     fullPage: true,
@@ -241,6 +242,63 @@ test("månadsliga, månadsvinnare, tom månad och återgång till totaltabell", 
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(width);
+  expect(errors).toEqual([]);
+});
+
+test("statistikhem: ringdiagram, rätt nämnare, duellval och ärvda datumfilter", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/#/statistik?period=custom&from=2026-10-22&to=2026-10-26");
+  const hero = page.getByRole("region", {
+    name: "Ligan i siffror",
+    exact: true,
+  });
+  await expect(hero).toBeVisible();
+  await expect(hero.locator(".stats-big-number strong")).toHaveText("27");
+  await expect(hero.locator(".stats-hero-totals > div").first()).toContainText(
+    "7",
+  );
+  await hero.getByRole("button", { name: /Adrian/ }).click();
+  await expect(hero.getByRole("status")).toContainText("26,3 %");
+  await expect(hero.getByRole("status")).toContainText("5 av 19 matcher vunna");
+  await hero.getByRole("button", { name: "Raster", exact: true }).click();
+  await expect(hero.getByRole("status")).toContainText("20,0 %");
+  await expect(hero.getByRole("status")).toContainText("1 av 5 raster vunna");
+  await page
+    .getByRole("region", { name: "Spelarnas resultat i urvalet" })
+    .getByRole("link", { name: /Adrian/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Adrian", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-22",
+  );
+  await expect(page.getByLabel("Till", { exact: true })).toHaveValue(
+    "2026-10-26",
+  );
+  await page.goBack();
+  const duel = page.getByRole("region", { name: "Duellöversikt" });
+  await duel.getByLabel("Spelarpar i översikten").selectOption("dave-elias");
+  await expect(duel.getByLabel("Dave 4, Elias 4 matchvinster")).toBeVisible();
+  await expect(duel).toContainText("2 oavgjorda");
+  await duel.getByRole("link").click();
+  await expect(page.locator(".duel-heading")).toContainText("Elias");
+  await expect(page.getByLabel("Från", { exact: true })).toHaveValue(
+    "2026-10-22",
+  );
+  await page.goto("/#/statistik?period=custom&from=2027-01-01&to=2027-01-31");
+  await expect(hero.locator(".stats-big-number strong")).toHaveText("0");
+  await expect(hero.getByRole("status")).toContainText("Inget underlag");
+  await expect(page.locator("main")).not.toContainText(/NaN|Infinity/);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth),
+  ).toBeLessThanOrEqual(page.viewportSize()!.width);
   expect(errors).toEqual([]);
 });
 
